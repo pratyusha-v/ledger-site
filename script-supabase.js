@@ -133,6 +133,11 @@ async function populateSubjectSelectors() {
         if (error) throw error;
 
         const select = document.getElementById('mainSubjectSelect');
+        // Clear existing options except the first one
+        while (select.options.length > 1) {
+            select.remove(1);
+        }
+        
         data.forEach(subject => {
             const option = document.createElement('option');
             option.value = subject.id;
@@ -182,7 +187,8 @@ function hideAllSections() {
 }
 
 function showSection(sectionId) {
-    if (!currentGrade || !currentSubject) {
+    // Allow subjects section to show without grade/subject selection
+    if (sectionId !== 'subjects-section' && (!currentGrade || !currentSubject)) {
         alert('Please select a grade and subject first.');
         return;
     }
