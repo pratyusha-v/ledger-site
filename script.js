@@ -224,13 +224,17 @@ function checkSelection() {
     const actionButtons = document.querySelectorAll('.action-btn');
     const emptyView = document.getElementById('emptyState');
 
+    console.log('[SELECT] Grade:', grade, 'Subject:', subject, 'Buttons found:', actionButtons.length);
+
     if (!grade || !subject) {
         actionButtons.forEach(btn => btn.disabled = true);
         emptyView.style.display = 'flex';
         hideAllSections();
+        console.log('[SELECT] Buttons disabled - selection incomplete');
     } else {
         actionButtons.forEach(btn => btn.disabled = false);
         emptyView.style.display = 'none';
+        console.log('[SELECT] Buttons enabled - selection complete');
     }
 }
 
@@ -250,23 +254,30 @@ function showSection(sectionId) {
 // ===== EVENT LISTENERS SETUP =====
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('[INIT] DOM loaded, initializing app...');
     populateSubjectSelectors();
 
     document.getElementById('mainGradeSelect').addEventListener('change', checkSelection);
     document.getElementById('mainSubjectSelect').addEventListener('change', checkSelection);
 
-    document.getElementById('manageStudentsBtn').addEventListener('click', () => {
+    document.getElementById('manageStudentsBtn').addEventListener('click', (e) => {
+        console.log('[CLICK] Manage Students button clicked');
+        e.preventDefault();
         showSection('students-section');
         renderStudentsList();
     });
 
-    document.getElementById('manageEvaluationsBtn').addEventListener('click', () => {
+    document.getElementById('manageEvaluationsBtn').addEventListener('click', (e) => {
+        console.log('[CLICK] Manage Evaluations button clicked');
+        e.preventDefault();
         showSection('evaluations-section');
         renderEvaluationsList();
         hideCreateEvalForm();
     });
 
-    document.getElementById('summaryBtn').addEventListener('click', () => {
+    document.getElementById('summaryBtn').addEventListener('click', (e) => {
+        console.log('[CLICK] Summary button clicked');
+        e.preventDefault();
         showSection('summary-section');
         renderSummary();
     });
@@ -275,12 +286,18 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const addNewEvalBtn = document.getElementById('addNewEvalBtn');
     if (addNewEvalBtn) {
-        addNewEvalBtn.addEventListener('click', showCreateEvalForm);
+        addNewEvalBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            showCreateEvalForm();
+        });
     }
     
     const cancelEvalBtn = document.getElementById('cancelEvalBtn');
     if (cancelEvalBtn) {
-        cancelEvalBtn.addEventListener('click', hideCreateEvalForm);
+        cancelEvalBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            hideCreateEvalForm();
+        });
     }
     
     const createEvaluationForm = document.getElementById('createEvaluationForm');
