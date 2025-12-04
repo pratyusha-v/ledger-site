@@ -912,8 +912,15 @@ function validateScore(studentId, maxScore) {
     }
     
     if (score < 0 || score > maxScore) {
+        scoreInput.value = '';
+        scoreInput.value = score < 0 ? '' : maxScore;
         errorIcon.style.display = 'inline-block';
         scoreInput.classList.add('score-error');
+        // Flash the error for 2 seconds
+        setTimeout(() => {
+            errorIcon.style.display = 'none';
+            scoreInput.classList.remove('score-error');
+        }, 2000);
     } else {
         errorIcon.style.display = 'none';
         scoreInput.classList.remove('score-error');
