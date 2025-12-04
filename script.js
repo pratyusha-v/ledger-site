@@ -570,18 +570,25 @@ function renderSummary() {
     });
     
     // Calculate overall class average
-    let totalClassScore = 0, totalClassWeightUsed = 0;
+    let totalClassScore = 0;
+    let totalClassWeightSum = 0;
     students.forEach(student => {
+        let studentWeightedScore = 0;
+        let studentWeightSum = 0;
         evaluations.forEach(e => {
             const score = getGrade(student.id, e.id);
             if (score !== null) {
                 const percentage = (parseFloat(score) / parseInt(e.maxScore)) * 100;
-                totalClassScore += (percentage * parseInt(e.weight)) / 100;
-                totalClassWeightUsed += parseInt(e.weight);
+                studentWeightedScore += (percentage * parseInt(e.weight)) / 100;
+                studentWeightSum += parseInt(e.weight);
             }
         });
+        if (studentWeightSum > 0) {
+            totalClassScore += studentWeightedScore;
+            totalClassWeightSum += studentWeightSum;
+        }
     });
-    const classAverage = totalClassWeightUsed > 0 ? (totalClassScore / (students.length * totalWeightUsed) * 100).toFixed(1) : '-';
+    const classAverage = totalClassWeightSum > 0 ? (totalClassScore / students.length).toFixed(1) : '-';
     
     html += `<td class="final-score"><strong>${classAverage}</strong></td></tr>`;
     
