@@ -4,6 +4,7 @@ import { supabase } from './supabase-client.js';
 let currentGrade = '';
 let currentSubject = '';
 let currentEvaluation = null;
+let editingEvaluationId = null;
 let gradeEntries = {}; // Track score inputs
 
 // ===== INITIALIZATION =====
@@ -66,6 +67,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Grade Entry View listeners
     document.getElementById('saveGradesBtn').addEventListener('click', handleSaveGrades);
+
+    // Edit Evaluation Modal listeners
+    document.getElementById('closeEditEvalBtn').addEventListener('click', closeEditEvalModal);
+    document.getElementById('cancelEditEvalBtn').addEventListener('click', closeEditEvalModal);
+    document.getElementById('editEvalForm').addEventListener('submit', handleEditEvalSubmit);
 
     checkSelection();
 });
@@ -387,37 +393,71 @@ async function editEvaluation(event, evaluationId) {
 
         if (error) throw error;
 
-        const newTitle = prompt('Evaluation name:', evaluation.title);
-        if (!newTitle) return;
+        // Populate modal form
+        editingEvaluationId = evaluationId;
+        document.getElementById('editEvalTitle').value = evaluation.title;
+        document.getElementById('editEvalDate').value = evaluation.date;
+        document.getElementById('editEvalMaxScore').value = evaluation.max_score;
+        document.getElementById('editEvalWeight').value = evaluation.weight;
+        document.getElementById('editEvalNotes').value = evaluation.notes || '';
 
-        const newMaxScore = prompt('Total marks:', evaluation.max_score);
-        if (!newMaxScore) return;
-
-        const newWeight = prompt('Weightage (%):', evaluation.weight);
-        if (!newWeight) return;
-
-        const newNotes = prompt('Notes (optional):', evaluation.notes || '');
-
-        const { error: updateError } = await supabase
-            .from('evaluations')
-            .update({
-                title: newTitle,
-                max_score: parseFloat(newMaxScore),
-                weight: parseFloat(newWeight),
-                notes: newNotes || null
-            })
-            .eq('id', evaluationId);
-
-        if (updateError) throw updateError;
-
-        console.log('[EVALUATIONS] Updated:', evaluationId);
-        renderEvaluationsList();
+        // Show modal
+        document.getElementById('editEvalModal').classList.remove('hidden');
+        console.log('[MODAL] Opened edit evaluation:', evaluationId);
     } catch (error) {
-        console.error('[ERROR] Failed to edit evaluation:', error);
-        alert('Failed to edit evaluation: ' + error.message);
+        console.error('[ERROR] Failed to open edit evaluation modal:', error);
+        alert('Failed to load evaluation: ' + error.message);
     }
 }
 
+function closeEditEvalModal() {
+    document.getElementById('editEvalModal').classList.add('hidden');
+    editingEvaluationId = null;
+    console.log('[MODAL] Closed edit evaluation modal');
+}
+
+async function handleEditEvalSubmit(e) {
+    e.preventDefault();
+    
+    if (!editingEvaluationId) {
+        alert('No evaluation selected');
+        return;
+    }
+
+    try {
+        const title = document.getElementById('editEvalTitle').value.trim();
+        const date = document.getElementById('editEvalDate').value;
+        const maxScore = parseFloat(document.getElementById('editEvalMaxScore').value);
+        const weight = parseFloat(document.getElementById('editEvalWeight').value);
+        const notes = document.getElementById('editEvalNotes').value.trim();
+
+        if (!title || !date || !maxScore || !weight) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        const { error } = await supabase
+            .from('evaluations')
+            .update({
+                title,
+                date,
+                max_score: maxScore,
+                weight,
+                notes: notes || null
+            })
+            .eq('id', editingEvaluationId);
+
+        if (error) throw error;
+
+        console.log('[EVALUATIONS] Updated:', editingEvaluationId);
+        closeEditEvalModal();
+        renderEvaluationsList();
+        alert('Evaluation updated successfully!');
+    } catch (error) {
+        console.error('[ERROR] Failed to update evaluation:', error);
+        alert('Failed to update evaluation: ' + error.message);
+    }
+}
 async function deleteEvaluation(event, evaluationId) {
     event.stopPropagation(); // Prevent opening grade entry modal
     if (!confirm('Are you sure you want to delete this evaluation?')) return;
@@ -715,6 +755,7 @@ async function handleSaveGrades() {
 window.editStudent = editStudent;
 window.deleteStudent = deleteStudent;
 window.editEvaluation = editEvaluation;
+window.closeEditEvalModal = closeEditEvalModal;
 window.deleteEvaluation = deleteEvaluation;
 window.openGradeEntryView = openGradeEntryView;
 window.updateWeightedMark = updateWeightedMark;
