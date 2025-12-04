@@ -120,7 +120,10 @@ function checkSelection() {
 }
 
 function hideAllSections() {
-    document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+        section.classList.add('hidden');
+    });
 }
 
 function showSection(sectionId) {
@@ -131,8 +134,11 @@ function showSection(sectionId) {
     hideAllSections();
     const section = document.getElementById(sectionId);
     if (section) {
+        section.classList.remove('hidden');
         section.classList.add('active');
         console.log('[SECTION] Showing:', sectionId);
+    } else {
+        console.error('[ERROR] Section not found:', sectionId);
     }
 }
 
