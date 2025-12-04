@@ -89,6 +89,15 @@ body {
     margin: 0 auto;
 }
 
+.site-title {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    opacity: 0.95;
+}
+
 .header h1 {
     font-size: 28px;
     font-weight: 600;
@@ -1089,17 +1098,35 @@ table input[type="text"] {
     flex: 1;
 }
 
+/* ===== Print Mode ===== */
+body.print-mode .sidebar,
+body.print-mode .header,
+body.print-mode .footer,
+body.print-mode .layout,
+body.print-mode .action-btn {
+    display: none !important;
+}
+
+body.print-mode .app {
+    display: block !important;
+    height: auto !important;
+}
+
+body.print-mode .content {
+    max-width: 100% !important;
+    padding: 20px !important;
+    margin: 0 !important;
+}
+
 /* ===== Print Styles ===== */
 @media print {
     .tabs,
-    .header,
     .footer,
-    .sidebar,
-    .layout,
     button,
     .selector,
     .selectors,
-    .form-section {
+    .form-section,
+    .empty-view {
         display: none;
     }
 
@@ -1109,6 +1136,19 @@ table input[type="text"] {
 
     .app {
         display: block;
+        height: auto;
+    }
+
+    .layout {
+        display: block;
+    }
+
+    .sidebar {
+        display: none;
+    }
+
+    .header {
+        display: none;
     }
 
     .content {
@@ -1116,27 +1156,39 @@ table input[type="text"] {
         padding: 20px;
         max-width: 100%;
         margin: 0;
+        flex: none;
+    }
+
+    .section {
+        display: block !important;
     }
 
     .summary-table {
         width: 100%;
-        font-size: 12px;
+        font-size: 11px;
+        border-collapse: collapse;
     }
 
     .summary-table thead {
         background: white;
-        border: 1px solid #333;
+        border: 1px solid #000;
     }
 
     .summary-table th {
         color: #000;
-        border: 1px solid #333;
-        padding: 10px;
+        border: 1px solid #000;
+        padding: 8px;
+        font-weight: bold;
     }
 
     .summary-table td {
-        border: 1px solid #333;
-        padding: 10px;
+        border: 1px solid #000;
+        padding: 8px;
+        text-align: center;
+    }
+
+    .summary-table td:first-child {
+        text-align: left;
     }
 
     table {

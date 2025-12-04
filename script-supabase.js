@@ -64,14 +64,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.getElementById('printSummaryBtn').addEventListener('click', () => {
-        // Hide sidebar and header for print
-        document.querySelector('.sidebar').style.display = 'none';
-        document.querySelector('.header').style.display = 'none';
+        // Add print class to body
+        document.body.classList.add('print-mode');
         window.print();
-        // Restore sidebar and header after print
+        // Remove print class after print dialog closes
         setTimeout(() => {
-            document.querySelector('.sidebar').style.display = 'block';
-            document.querySelector('.header').style.display = 'block';
+            document.body.classList.remove('print-mode');
         }, 500);
     });
 
