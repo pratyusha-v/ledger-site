@@ -534,43 +534,54 @@ async function renderSummary() {
             gradeMap[entry.student_id][entry.evaluation_id] = entry.score;
         });
 
-        // Build HTML table
+        // Build HTML table with marks and weighted marks columns
         let html = `
             <table class="summary-table">
                 <thead>
                     <tr>
                         <th>Student Name</th>
-                        ${evaluations.map(e => `<th>${e.title}<br><small>(${e.max_score})</small></th>`).join('')}
-                        <th>Weighted Average</th>
+                        ${evaluations.map(e => `<th colspan="2" style="text-align: center;">${e.title}<br><small>(${e.max_score} marks, ${e.weight}% weight)</small></th>`).join('')}
+                        <th colspan="2" style="text-align: center;">Total</th>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        ${evaluations.map(() => `<th>Marks</th><th>Weighted</th>`).join('')}
+                        <th>Marks</th>
+                        <th>Weighted</th>
                     </tr>
                 </thead>
                 <tbody>
         `;
 
         students.forEach(student => {
-            const scores = evaluations.map(evaluation => {
+            const scores = evaluations.map((evaluation, idx) => {
                 const score = gradeMap[student.id]?.[evaluation.id];
                 return {
                     score: score || '-',
-                    percent: score ? ((score / evaluation.max_score) * 100).toFixed(1) : '-',
+                    max: evaluation.max_score,
                     weight: evaluation.weight,
-                    max: evaluation.max_score
+                    percent: score ? ((score / evaluation.max_score) * 100).toFixed(1) : '-',
+                    weightedMarks: score ? ((score / evaluation.max_score) * 100 * evaluation.weight / 100).toFixed(2) : '-'
                 };
             });
 
-            const weightedAvg = scores.every(s => s.score === '-')
+            // Calculate totals
+            const totalMarks = scores.every(s => s.score === '-')
                 ? '-'
-                : (scores.reduce((sum, s, idx) => {
-                    if (s.score === '-') return sum;
-                    const percent = (s.score / evaluations[idx].max_score) * 100;
-                    return sum + (percent * s.weight);
-                }, 0) / evaluations.reduce((sum, e) => sum + e.weight, 0)).toFixed(1);
+                : scores.reduce((sum, s) => sum + (s.score === '-' ? 0 : parseFloat(s.score)), 0).toFixed(2);
+
+            const totalMaxMarks = evaluations.reduce((sum, e) => sum + e.max_score, 0);
+
+            const totalWeighted = scores.every(s => s.score === '-')
+                ? '-'
+                : scores.reduce((sum, s) => sum + (s.weightedMarks === '-' ? 0 : parseFloat(s.weightedMarks)), 0).toFixed(2);
 
             html += `
                 <tr>
                     <td><strong>${student.name}</strong></td>
-                    ${scores.map(s => `<td>${s.score}${s.score !== '-' ? ` (${s.percent}%)` : ''}</td>`).join('')}
-                    <td><strong>${weightedAvg}%</strong></td>
+                    ${scores.map(s => `<td>${s.score}</td><td>${s.weightedMarks}</td>`).join('')}
+                    <td><strong>${totalMarks}</strong></td>
+                    <td><strong>${totalWeighted}</strong></td>
                 </tr>
             `;
         });
