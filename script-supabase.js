@@ -63,7 +63,17 @@ document.addEventListener('DOMContentLoaded', () => {
         createEvaluationForm.addEventListener('submit', handleCreateEvaluation);
     }
 
-    document.getElementById('printSummaryBtn').addEventListener('click', () => window.print());
+    document.getElementById('printSummaryBtn').addEventListener('click', () => {
+        // Hide sidebar and header for print
+        document.querySelector('.sidebar').style.display = 'none';
+        document.querySelector('.header').style.display = 'none';
+        window.print();
+        // Restore sidebar and header after print
+        setTimeout(() => {
+            document.querySelector('.sidebar').style.display = 'block';
+            document.querySelector('.header').style.display = 'block';
+        }, 500);
+    });
 
     // Grade Entry View listeners
     document.getElementById('saveGradesBtn').addEventListener('click', handleSaveGrades);
@@ -122,6 +132,9 @@ function checkSelection() {
         actionButtons.forEach(btn => btn.disabled = false);
         emptyView.style.display = 'none';
         console.log('[SELECT] Buttons enabled - selection complete');
+        // Auto-navigate to summary
+        showSection('summary-section');
+        renderSummary();
     }
 }
 
