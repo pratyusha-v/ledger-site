@@ -64,13 +64,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.getElementById('printSummaryBtn').addEventListener('click', () => {
-        // Add print class to body
-        document.body.classList.add('print-mode');
-        window.print();
-        // Remove print class after print dialog closes
-        setTimeout(() => {
-            document.body.classList.remove('print-mode');
-        }, 500);
+        // Use native print with better handling
+        const printWindow = window.open('', '_blank');
+        const table = document.querySelector('.summary-table');
+        if (table) {
+            const html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Evaluation Summary</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th { background-color: #f0f0f0; border: 1px solid #000; padding: 10px; text-align: center; font-weight: bold; }
+                        td { border: 1px solid #000; padding: 10px; text-align: center; }
+                        td:first-child { text-align: left; }
+                    </style>
+                </head>
+                <body>
+                    ${table.outerHTML}
+                </body>
+                </html>
+            `;
+            printWindow.document.write(html);
+            printWindow.document.close();
+            setTimeout(() => {
+                printWindow.print();
+            }, 250);
+        }
     });
 
     // Grade Entry View listeners
