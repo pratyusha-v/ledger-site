@@ -962,15 +962,30 @@ async function handleSaveGrades() {
         return;
     }
 
-    // Check for invalid scores before saving
-    if (hasInvalidScores(currentEvaluation.max_score)) {
-        alert('Please fix invalid scores (must be between 0 and ' + currentEvaluation.max_score + ') before saving.');
+    // Check for invalid scores and highlight them
+    const scoreInputs = document.querySelectorAll('#gradeEntryList input[type="number"]');
+    let hasInvalid = false;
+
+    scoreInputs.forEach(input => {
+        const score = parseFloat(input.value);
+        if (input.value !== '' && !isNaN(score)) {
+            if (score < 0 || score > currentEvaluation.max_score) {
+                const studentId = input.id.replace('score-', '');
+                const errorIcon = document.getElementById(`error-${studentId}`);
+                input.classList.add('score-error');
+                errorIcon.style.display = 'inline-block';
+                hasInvalid = true;
+            }
+        }
+    });
+
+    if (hasInvalid) {
+        alert('Please fix invalid scores (marked with red outline). Scores must be between 0 and ' + currentEvaluation.max_score + '.');
         return;
     }
 
     try {
         // Get all score inputs
-        const scoreInputs = document.querySelectorAll('#gradeEntryList input[type="number"]');
         const updates = [];
 
         scoreInputs.forEach(input => {
