@@ -307,6 +307,12 @@ async function renderEvaluationsList() {
                     ${evaluation.notes ? `<p class="evaluation-notes">${evaluation.notes}</p>` : ''}
                 </div>
                 <div class="evaluation-actions">
+                    <button class="btn-icon" onclick="editEvaluation(event, '${evaluation.id}')" title="Edit">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </button>
                     <button class="btn-icon" onclick="deleteEvaluation(event, '${evaluation.id}')" title="Delete">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="3 6 5 6 21 6"></polyline>
@@ -367,6 +373,48 @@ async function handleCreateEvaluation(e) {
     } catch (error) {
         console.error('[ERROR] Failed to create evaluation:', error);
         alert('Failed to create evaluation: ' + error.message);
+    }
+}
+
+async function editEvaluation(event, evaluationId) {
+    event.stopPropagation();
+    try {
+        const { data: evaluation, error } = await supabase
+            .from('evaluations')
+            .select('*')
+            .eq('id', evaluationId)
+            .single();
+
+        if (error) throw error;
+
+        const newTitle = prompt('Evaluation name:', evaluation.title);
+        if (!newTitle) return;
+
+        const newMaxScore = prompt('Total marks:', evaluation.max_score);
+        if (!newMaxScore) return;
+
+        const newWeight = prompt('Weightage (%):', evaluation.weight);
+        if (!newWeight) return;
+
+        const newNotes = prompt('Notes (optional):', evaluation.notes || '');
+
+        const { error: updateError } = await supabase
+            .from('evaluations')
+            .update({
+                title: newTitle,
+                max_score: parseFloat(newMaxScore),
+                weight: parseFloat(newWeight),
+                notes: newNotes || null
+            })
+            .eq('id', evaluationId);
+
+        if (updateError) throw updateError;
+
+        console.log('[EVALUATIONS] Updated:', evaluationId);
+        renderEvaluationsList();
+    } catch (error) {
+        console.error('[ERROR] Failed to edit evaluation:', error);
+        alert('Failed to edit evaluation: ' + error.message);
     }
 }
 
@@ -666,6 +714,7 @@ async function handleSaveGrades() {
 // ===== WINDOW FUNCTIONS (for onclick handlers) =====
 window.editStudent = editStudent;
 window.deleteStudent = deleteStudent;
+window.editEvaluation = editEvaluation;
 window.deleteEvaluation = deleteEvaluation;
 window.openGradeEntryView = openGradeEntryView;
 window.updateWeightedMark = updateWeightedMark;
