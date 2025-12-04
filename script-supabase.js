@@ -64,9 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('printSummaryBtn').addEventListener('click', () => window.print());
 
-    // Grade Entry Modal listeners
-    document.getElementById('closeGradeEntryBtn').addEventListener('click', closeGradeEntryModal);
-    document.getElementById('cancelGradesBtn').addEventListener('click', closeGradeEntryModal);
+    // Grade Entry View listeners
     document.getElementById('saveGradesBtn').addEventListener('click', handleSaveGrades);
 
     checkSelection();
@@ -290,7 +288,7 @@ async function renderEvaluationsList() {
         }
 
         evaluationsList.innerHTML = evaluations.map(evaluation => `
-            <div class="evaluation-item" onclick="openGradeEntryModal('${evaluation.id}')">
+            <div class="evaluation-item" onclick="openGradeEntryView('${evaluation.id}')">
                 <div>
                     <div class="evaluation-header">
                         <h4>${evaluation.title}</h4>
@@ -501,9 +499,11 @@ async function renderSummary() {
     }
 }
 
-// ===== GRADE ENTRY MODAL =====
-async function openGradeEntryModal(evaluationId) {
+// ===== GRADE ENTRY VIEW =====
+async function openGradeEntryView(evaluationId) {
     try {
+        console.log('[GRADES] Opening grade entry for evaluation:', evaluationId);
+
         // Fetch evaluation details
         const { data: evaluation, error: evalError } = await supabase
             .from('evaluations')
@@ -539,14 +539,17 @@ async function openGradeEntryModal(evaluationId) {
             gradesMap[g.student_id] = g.score;
         });
 
-        // Populate modal
-        const modalTitle = document.getElementById('gradeEntryTitle');
-        modalTitle.textContent = `Enter Grades - ${evaluation.title}`;
+        // Update title
+        const titleEl = document.getElementById('gradeEntryViewTitle');
+        titleEl.textContent = `Enter Grades - ${evaluation.title}`;
 
+        // Populate grade entry list
         const gradeEntryList = document.getElementById('gradeEntryList');
         gradeEntryList.innerHTML = students.map(student => {
             const existingScore = gradesMap[student.id] || '';
-            const percent = existingScore ? ((existingScore / evaluation.max_score) * 100).toFixed(1) : '';
+            const weightedMark = existingScore 
+                ? ((existingScore / evaluation.max_score) * evaluation.weight).toFixed(2)
+                : '';
             return `
                 <div class="grade-entry-row">
                     <div class="student-name">${student.name}</div>
@@ -556,57 +559,61 @@ async function openGradeEntryModal(evaluationId) {
                            min="0" 
                            max="${evaluation.max_score}"
                            value="${existingScore}"
-                           onchange="updateWeightedPercent('${student.id}', ${evaluation.max_score})">
-                    <div class="weighted-percent ${percent ? '' : 'empty'}" id="percent-${student.id}">
-                        ${percent ? percent + '%' : '-'}
+                           onchange="updateWeightedMark('${student.id}', ${evaluation.max_score}, ${evaluation.weight})">
+                    <div class="weighted-mark ${weightedMark ? '' : 'empty'}" id="mark-${student.id}">
+                        ${weightedMark ? weightedMark : '-'}
                     </div>
                 </div>
             `;
         }).join('');
 
-        // Show modal
-        document.getElementById('gradeEntryModal').classList.add('active');
-        console.log('[MODAL] Opened grade entry for evaluation:', evaluationId);
+        // Switch views
+        document.getElementById('evaluationsListView').classList.add('hidden');
+        document.getElementById('gradeEntryView').classList.add('active');
     } catch (error) {
-        console.error('[ERROR] Failed to open grade entry modal:', error);
+        console.error('[ERROR] Failed to open grade entry view:', error);
         alert('Failed to open grades: ' + error.message);
     }
 }
 
-function updateWeightedPercent(studentId, maxScore) {
+function updateWeightedMark(studentId, maxScore, weight) {
     const scoreInput = document.getElementById(`score-${studentId}`);
-    const percentDisplay = document.getElementById(`percent-${studentId}`);
+    const markDisplay = document.getElementById(`mark-${studentId}`);
     
     const score = parseFloat(scoreInput.value);
-    if (score && !isNaN(score)) {
-        const percent = ((score / maxScore) * 100).toFixed(1);
-        percentDisplay.textContent = percent + '%';
-        percentDisplay.classList.remove('empty');
+    if (score !== null && score !== '' && !isNaN(score)) {
+        const weightedMark = ((score / maxScore) * weight).toFixed(2);
+        markDisplay.textContent = weightedMark;
+        markDisplay.classList.remove('empty');
     } else {
-        percentDisplay.textContent = '-';
-        percentDisplay.classList.add('empty');
+        markDisplay.textContent = '-';
+        markDisplay.classList.add('empty');
     }
 }
 
-function closeGradeEntryModal() {
-    document.getElementById('gradeEntryModal').classList.remove('active');
+function backToEvaluationsList() {
+    document.getElementById('gradeEntryView').classList.remove('active');
+    document.getElementById('evaluationsListView').classList.remove('hidden');
     currentEvaluation = null;
-    console.log('[MODAL] Closed grade entry modal');
+    console.log('[GRADES] Back to evaluations list');
 }
 
 async function handleSaveGrades() {
-    if (!currentEvaluation) return;
+    if (!currentEvaluation) {
+        alert('No evaluation selected');
+        return;
+    }
 
     try {
         // Get all score inputs
-        const scoreInputs = document.querySelectorAll('input[type="number"]');
+        const scoreInputs = document.querySelectorAll('#gradeEntryList input[type="number"]');
         const updates = [];
 
         scoreInputs.forEach(input => {
             const studentId = input.id.replace('score-', '');
             const score = parseFloat(input.value);
 
-            if (score || score === 0) {
+            if (score !== null && score !== '' && !isNaN(score)) {
                 updates.push({
                     student_id: studentId,
                     evaluation_id: currentEvaluation.id,
@@ -619,6 +626,8 @@ async function handleSaveGrades() {
             alert('Please enter at least one grade.');
             return;
         }
+
+        console.log('[GRADES] Saving', updates.length, 'grades for evaluation:', currentEvaluation.id);
 
         // Delete existing grades for this evaluation
         await supabase
@@ -633,8 +642,8 @@ async function handleSaveGrades() {
 
         if (error) throw error;
 
-        console.log('[GRADES] Saved', updates.length, 'grades');
-        closeGradeEntryModal();
+        console.log('[GRADES] Saved successfully');
+        backToEvaluationsList();
         renderEvaluationsList();
         renderSummary();
         alert('Grades saved successfully!');
@@ -648,6 +657,6 @@ async function handleSaveGrades() {
 window.editStudent = editStudent;
 window.deleteStudent = deleteStudent;
 window.deleteEvaluation = deleteEvaluation;
-window.openGradeEntryModal = openGradeEntryModal;
-window.updateWeightedPercent = updateWeightedPercent;
-window.closeGradeEntryModal = closeGradeEntryModal;
+window.openGradeEntryView = openGradeEntryView;
+window.updateWeightedMark = updateWeightedMark;
+window.backToEvaluationsList = backToEvaluationsList;

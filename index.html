@@ -84,7 +84,8 @@
                 <section id="evaluations-section" class="section hidden">
                     <h2>Evaluations & Assignments</h2>
                     <div class="section-content evaluations-section">
-                        <div class="evaluations-list-container">
+                        <!-- Evaluations List View -->
+                        <div id="evaluationsListView" class="evaluations-list-container">
                             <div class="list-header">
                                 <h3>All Evaluations</h3>
                                 <button id="addNewEvalBtn" class="btn-add-icon" title="Add new evaluation">
@@ -96,6 +97,21 @@
                             </div>
                             <div id="evaluationsList" class="items-list scrollable-list">
                                 <p class="empty-state">No evaluations yet.</p>
+                            </div>
+                        </div>
+
+                        <!-- Grade Entry View -->
+                        <div id="gradeEntryView" class="grade-entry-view hidden">
+                            <div class="grade-entry-header">
+                                <button id="backFromGradesBtn" class="btn-secondary" onclick="backToEvaluationsList()">← Back</button>
+                                <h3 id="gradeEntryViewTitle">Enter Grades</h3>
+                            </div>
+                            <div id="gradeEntryList" class="grade-entry-list">
+                                <!-- Populated dynamically -->
+                            </div>
+                            <div class="grade-entry-actions">
+                                <button id="saveGradesBtn" class="btn-primary">Save Grades</button>
+                                <button id="cancelGradesBtn" class="btn-secondary" onclick="backToEvaluationsList()">Cancel</button>
                             </div>
                         </div>
 
@@ -137,23 +153,6 @@
                     <p>Select a grade and subject, then choose an action above.</p>
                 </div>
             </main>
-        </div>
-
-        <!-- Grade Entry Modal -->
-        <div id="gradeEntryModal" class="grade-entry-modal">
-            <div class="grade-entry-panel">
-                <div class="grade-entry-header">
-                    <h3 id="gradeEntryTitle">Enter Grades</h3>
-                    <button id="closeGradeEntryBtn" class="grade-entry-close">&times;</button>
-                </div>
-                <div id="gradeEntryList" class="grade-entry-list">
-                    <!-- Populated dynamically -->
-                </div>
-                <div class="grade-entry-actions">
-                    <button id="saveGradesBtn" class="btn-primary">Save Grades</button>
-                    <button id="cancelGradesBtn" class="btn-secondary">Cancel</button>
-                </div>
-            </div>
         </div>
 
         <!-- Footer -->
