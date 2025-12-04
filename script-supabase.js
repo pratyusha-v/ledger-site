@@ -575,7 +575,10 @@ async function openGradeEntryView(evaluationId) {
 
         // Switch views
         document.getElementById('evaluationsListView').classList.add('hidden');
+        document.getElementById('gradeEntryView').classList.remove('hidden');
         document.getElementById('gradeEntryView').classList.add('active');
+        
+        console.log('[GRADES] Grade entry view opened');
     } catch (error) {
         console.error('[ERROR] Failed to open grade entry view:', error);
         alert('Failed to open grades: ' + error.message);
@@ -599,6 +602,7 @@ function updateWeightedMark(studentId, maxScore, weight) {
 
 function backToEvaluationsList() {
     document.getElementById('gradeEntryView').classList.remove('active');
+    document.getElementById('gradeEntryView').classList.add('hidden');
     document.getElementById('evaluationsListView').classList.remove('hidden');
     currentEvaluation = null;
     console.log('[GRADES] Back to evaluations list');
