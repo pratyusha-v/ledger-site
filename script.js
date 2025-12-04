@@ -43,11 +43,12 @@ function getNextId(collection) {
 
 // ===== STUDENT OPERATIONS =====
 
-function addStudent(name, grade) {
+function addStudent(name, grade, rollNumber) {
     const student = {
         id: getNextId(appData.students),
         name: name,
-        grade: parseInt(grade)
+        grade: parseInt(grade),
+        rollNumber: rollNumber || ''
     };
     appData.students.push(student);
     saveData(appData);
@@ -70,7 +71,7 @@ function getStudentById(studentId) {
 
 // ===== EVALUATION OPERATIONS =====
 
-function addEvaluation(title, grade, subjectId, maxScore, weight, date) {
+function addEvaluation(title, grade, subjectId, maxScore, weight, date, notes) {
     const evaluation = {
         id: getNextId(appData.evaluations),
         title: title,
@@ -78,7 +79,8 @@ function addEvaluation(title, grade, subjectId, maxScore, weight, date) {
         subjectId: parseInt(subjectId),
         maxScore: parseInt(maxScore),
         weight: parseInt(weight),
-        date: date || new Date().toISOString().split('T')[0]
+        date: date || new Date().toISOString().split('T')[0],
+        notes: notes || ''
     };
     appData.evaluations.push(evaluation);
     saveData(appData);
@@ -275,6 +277,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('addStudentForm').addEventListener('submit', handleAddStudent);
     document.getElementById('addEvaluationForm').addEventListener('submit', handleAddEvaluation);
+    const createEvalForm = document.getElementById('createEvaluationForm');
+    if (createEvalForm) {
+        createEvalForm.addEventListener('submit', handleCreateEvaluation);
+    }
     document.getElementById('printSummaryBtn').addEventListener('click', () => window.print());
 
     checkSelection();
@@ -296,10 +302,11 @@ function renderStudentsList() {
         html += `
             <div class="list-item">
                 <div>
-                    <div class="list-item-name">${student.name}</div>
+                    <div class="list-item-name">${student.rollNumber} - ${student.name}</div>
                 </div>
                 <div class="list-item-actions">
-                    <button class="btn-danger" onclick="deleteAndRefresh('student', ${student.id})">Delete</button>
+                    <button class="btn-icon" title="Edit" onclick="editStudent(${student.id})">✎</button>
+                    <button class="btn-icon btn-danger" title="Delete" onclick="deleteAndRefresh('student', ${student.id})">🗑</button>
                 </div>
             </div>
         `;
@@ -311,15 +318,35 @@ function renderStudentsList() {
 function handleAddStudent(e) {
     e.preventDefault();
     const name = document.getElementById('studentNameInput').value.trim();
+    const rollNumber = document.getElementById('studentRollInput').value.trim();
 
-    if (!name) {
-        alert('Please enter a student name.');
+    if (!name || !rollNumber) {
+        alert('Please enter both student name and roll number.');
         return;
     }
 
-    addStudent(name, currentGrade);
+    addStudent(name, currentGrade, rollNumber);
     document.getElementById('studentNameInput').value = '';
+    document.getElementById('studentRollInput').value = '';
     renderStudentsList();
+}
+
+function editStudent(studentId) {
+    const student = getStudentById(studentId);
+    if (!student) return;
+    
+    const newName = prompt('Edit student name:', student.name);
+    if (newName === null) return;
+    
+    const newRoll = prompt('Edit roll number:', student.rollNumber);
+    if (newRoll === null) return;
+    
+    if (newName.trim() && newRoll.trim()) {
+        student.name = newName.trim();
+        student.rollNumber = newRoll.trim();
+        saveData(appData);
+        renderStudentsList();
+    }
 }
 
 function deleteAndRefresh(type, id) {
@@ -378,6 +405,25 @@ function handleAddEvaluation(e) {
     addEvaluation(title, currentGrade, currentSubject, maxScore, weight, date);
     document.getElementById('addEvaluationForm').reset();
     renderEvaluationsList();
+}
+
+function handleCreateEvaluation(e) {
+    e.preventDefault();
+    const name = document.getElementById('newEvalNameInput').value.trim();
+    const date = document.getElementById('newEvalDateInput').value;
+    const maxScore = document.getElementById('newEvalMaxScoreInput').value;
+    const weight = document.getElementById('newEvalWeightInput').value;
+    const notes = document.getElementById('newEvalNotesInput').value.trim();
+
+    if (!name || !date || !maxScore || !weight) {
+        alert('Please fill in all required fields.');
+        return;
+    }
+
+    addEvaluation(name, currentGrade, currentSubject, maxScore, weight, date, notes);
+    document.getElementById('createEvaluationForm').reset();
+    renderGradeEntryTable();
+    alert('Evaluation created! Now enter student grades below.');
 }
 
 // ===== GRADE ENTRY SECTION =====
@@ -448,43 +494,98 @@ function renderSummary() {
         return;
     }
 
-    let html = `
-        <div class="summary-grid">
-            <div class="summary-card">
-                <h4>Total Students</h4>
-                <div class="value">${students.length}</div>
-            </div>
-            <div class="summary-card">
-                <h4>Total Evaluations</h4>
-                <div class="value">${evaluations.length}</div>
-            </div>
-    `;
-
-    const classAvg = calculateClassSubjectAverage(parseInt(currentGrade), parseInt(currentSubject));
-    html += `
-            <div class="summary-card">
-                <h4>Class Average</h4>
-                <div class="value">${classAvg !== null ? classAvg + '%' : 'N/A'}</div>
-            </div>
-        </div>
-    `;
-
-    html += '<h3>Evaluation Averages</h3><table class="grade-table"><thead><tr><th>Title</th><th>Date</th><th>Class Avg</th></tr></thead><tbody>';
-    evaluations.forEach(e => {
-        const avg = calculateEvaluationAverage(e.id);
-        html += `<tr><td>${e.title}</td><td>${formatDate(e.date)}</td><td>${avg !== null ? avg + '%' : 'N/A'}</td></tr>`;
-    });
-    html += '</tbody></table>';
-
-    if (students.length > 0) {
-        html += `<h3>Student Averages in ${subject.name}</h3><table class="grade-table"><thead><tr><th>Student</th><th>Average</th></tr></thead><tbody>`;
-        students.forEach(student => {
-            const avg = calculateStudentSubjectAverage(student.id, parseInt(currentGrade), parseInt(currentSubject));
-            const avgText = avg !== null ? avg + '%' : 'No grades';
-            html += `<tr><td>${student.name}</td><td>${avgText}</td></tr>`;
-        });
-        html += '</tbody></table>';
+    if (students.length === 0) {
+        container.innerHTML = '<p class="empty-state">No students in this grade.</p>';
+        document.getElementById('printSummaryBtn').style.display = 'none';
+        return;
     }
+
+    // Calculate total weight to show as reference
+    const totalWeight = evaluations.reduce((sum, e) => sum + parseInt(e.weight), 0);
+
+    let html = `<div class="summary-header">
+        <h3>Evaluation Summary for ${subject.name} - Grade ${currentGrade}</h3>
+        <p>Total Weight: ${totalWeight}</p>
+    </div>`;
+
+    // Build table header with evaluation columns
+    html += '<table class="summary-table"><thead><tr><th>Student</th>';
+    
+    evaluations.forEach(e => {
+        html += `<th colspan="2">${e.title}</th>`;
+    });
+    
+    html += '<th>Final Score</th></tr>';
+    html += '<tr><td></td>';
+    
+    evaluations.forEach(() => {
+        html += '<th class="subheader">Marks</th><th class="subheader">Weighted</th>';
+    });
+    
+    html += '<th class="subheader">(%)</th></tr></thead><tbody>';
+
+    // Add student rows
+    students.forEach(student => {
+        let studentTotal = 0;
+        let totalWeightUsed = 0;
+        
+        html += `<tr><td class="student-col"><strong>${student.rollNumber}</strong><br/>${student.name}</td>`;
+        
+        evaluations.forEach(e => {
+            const score = getGrade(student.id, e.id);
+            const scoreDisplay = score !== null ? parseFloat(score).toFixed(1) : '-';
+            
+            if (score !== null) {
+                const percentage = (parseFloat(score) / parseInt(e.maxScore)) * 100;
+                const weighted = (percentage * parseInt(e.weight)) / 100;
+                studentTotal += weighted;
+                totalWeightUsed += parseInt(e.weight);
+                
+                html += `<td>${scoreDisplay}/${e.maxScore}</td><td>${weighted.toFixed(1)}</td>`;
+            } else {
+                html += '<td>-</td><td>-</td>';
+            }
+        });
+        
+        const finalScore = totalWeightUsed > 0 ? (studentTotal / totalWeightUsed * 100).toFixed(1) : '-';
+        html += `<td class="final-score"><strong>${finalScore}</strong></td></tr>`;
+    });
+
+    // Add class average row
+    html += '<tr class="average-row"><td><strong>Class Average</strong></td>';
+    
+    evaluations.forEach(e => {
+        let total = 0, count = 0;
+        students.forEach(student => {
+            const score = getGrade(student.id, e.id);
+            if (score !== null) {
+                total += (parseFloat(score) / parseInt(e.maxScore)) * 100;
+                count++;
+            }
+        });
+        const avg = count > 0 ? (total / count).toFixed(1) : '-';
+        const weighted = (avg !== '-') ? ((parseFloat(avg) * parseInt(e.weight)) / 100).toFixed(1) : '-';
+        
+        html += `<td>${avg}</td><td>${weighted}</td>`;
+    });
+    
+    // Calculate overall class average
+    let totalClassScore = 0, totalClassWeightUsed = 0;
+    students.forEach(student => {
+        evaluations.forEach(e => {
+            const score = getGrade(student.id, e.id);
+            if (score !== null) {
+                const percentage = (parseFloat(score) / parseInt(e.maxScore)) * 100;
+                totalClassScore += (percentage * parseInt(e.weight)) / 100;
+                totalClassWeightUsed += parseInt(e.weight);
+            }
+        });
+    });
+    const classAverage = totalClassWeightUsed > 0 ? (totalClassScore / (students.length * totalWeightUsed) * 100).toFixed(1) : '-';
+    
+    html += `<td class="final-score"><strong>${classAverage}</strong></td></tr>`;
+    
+    html += '</tbody></table>';
 
     container.innerHTML = html;
     document.getElementById('printSummaryBtn').style.display = 'inline-block';

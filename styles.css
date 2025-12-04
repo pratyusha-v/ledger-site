@@ -352,6 +352,31 @@ select {
     font-size: 0.85rem;
 }
 
+.btn-icon {
+    background-color: transparent;
+    color: #667eea;
+    border: 1px solid #ddd;
+    padding: 6px 10px;
+    font-size: 1.1rem;
+    transition: all 0.2s ease;
+    margin: 0 4px;
+}
+
+.btn-icon:hover {
+    background-color: #f0f0f0;
+    border-color: #667eea;
+}
+
+.btn-icon.btn-danger {
+    color: #ff6b6b;
+    background-color: transparent;
+    border-color: #ff6b6b;
+}
+
+.btn-icon.btn-danger:hover {
+    background-color: #ffe6e6;
+}
+
 /* ===== Forms ===== */
 .form-section {
     background-color: #f9f9f9;
@@ -360,17 +385,40 @@ select {
     margin-bottom: 25px;
 }
 
+.form-section h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 16px;
+}
+
 .form-section form {
     display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    align-items: flex-end;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.form-section .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+}
+
+.form-section .form-group label {
+    margin-bottom: 0;
 }
 
 .form-section input,
-.form-section select {
-    flex: 1;
-    min-width: 150px;
+.form-section select,
+.form-section textarea {
+    width: 100%;
+    min-width: auto;
+}
+
+.form-section .btn-primary {
+    align-self: flex-start;
+    margin-top: 4px;
 }
 
 /* ===== Lists & Tables ===== */
@@ -480,6 +528,73 @@ table input[type="text"] {
     font-size: 2rem;
     font-weight: bold;
     color: #667eea;
+}
+
+/* ===== Summary Table ===== */
+.summary-header {
+    margin-bottom: 20px;
+}
+
+.summary-header h3 {
+    font-size: 18px;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.summary-header p {
+    color: #999;
+    font-size: 14px;
+}
+
+.summary-table {
+    font-size: 0.9rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.summary-table thead {
+    background: linear-gradient(135deg, #667eea 0%, #5568d3 100%);
+    color: white;
+}
+
+.summary-table th {
+    color: white;
+    font-weight: 600;
+    text-align: center;
+    border-bottom: 2px solid #5568d3;
+}
+
+.summary-table th.subheader {
+    font-size: 0.85rem;
+    padding: 8px;
+}
+
+.summary-table td {
+    text-align: center;
+    color: #2c3e50;
+}
+
+.summary-table .student-col {
+    text-align: left;
+    font-weight: 500;
+    min-width: 150px;
+}
+
+.summary-table .final-score {
+    background-color: #f0f4ff;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.summary-table .average-row {
+    background-color: #f5f5f5;
+    font-weight: 600;
+    border-top: 2px solid #ddd;
+}
+
+.summary-table tbody tr:hover {
+    background-color: #f9f9f9;
 }
 
 /* ===== Reports ===== */

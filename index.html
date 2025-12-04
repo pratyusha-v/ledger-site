@@ -70,9 +70,10 @@
                     <div class="section-content">
                         <div class="form-section">
                             <h3>Add New Student</h3>
-                            <form id="addStudentForm" class="inline-form">
+                            <form id="addStudentForm" class="student-form">
                                 <input type="text" id="studentNameInput" placeholder="Student name" required>
-                                <button type="submit" class="btn-primary">Add</button>
+                                <input type="text" id="studentRollInput" placeholder="Roll number" required>
+                                <button type="submit" class="btn-primary">Add Student</button>
                             </form>
                         </div>
 
@@ -84,7 +85,7 @@
 
                 <!-- Manage Evaluations Section -->
                 <section id="evaluations-section" class="section hidden">
-                    <h2>Manage Evaluations</h2>
+                    <h2>Manage Evaluations & Assignments</h2>
                     <div class="section-content">
                         <div class="form-section">
                             <h3>Add New Evaluation</h3>
@@ -105,10 +106,25 @@
 
                 <!-- New Evaluation / Enter Grades Section -->
                 <section id="new-evaluation-section" class="section hidden">
-                    <h2>Enter Grades</h2>
+                    <h2>Create New Evaluation</h2>
                     <div class="section-content">
+                        <div class="form-section">
+                            <h3>Evaluation Details</h3>
+                            <form id="createEvaluationForm" class="student-form">
+                                <input type="text" id="newEvalNameInput" placeholder="Evaluation name" required>
+                                <div class="form-group">
+                                    <label for="newEvalDateInput">Date Conducted:</label>
+                                    <input type="date" id="newEvalDateInput" required>
+                                </div>
+                                <input type="number" id="newEvalMaxScoreInput" placeholder="Total marks" min="1" value="100" required>
+                                <input type="number" id="newEvalWeightInput" placeholder="Weightage towards final grade (%)" min="0" max="100" value="10" required>
+                                <textarea id="newEvalNotesInput" placeholder="Short notes (optional)" rows="3"></textarea>
+                                <button type="submit" class="btn-primary">Create Evaluation</button>
+                            </form>
+                        </div>
+
                         <div id="gradeEntryContainer">
-                            <p class="empty-state">No evaluations available. Create one first.</p>
+                            <p class="empty-state">Create an evaluation first to enter grades.</p>
                         </div>
                     </div>
                 </section>
