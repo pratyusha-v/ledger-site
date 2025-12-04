@@ -441,12 +441,21 @@ function handleCreateEvaluation(e) {
     const weight = document.getElementById('newEvalWeightInput').value;
     const notes = document.getElementById('newEvalNotesInput').value.trim();
 
+    console.log('[DEBUG] Creating evaluation:', { name, date, maxScore, weight, currentGrade, currentSubject });
+
     if (!name || !date || !maxScore || !weight) {
         alert('Please fill in all required fields.');
         return;
     }
 
-    addEvaluation(name, currentGrade, currentSubject, maxScore, weight, date, notes);
+    if (!currentGrade || !currentSubject) {
+        alert('Please select a grade and subject first.');
+        return;
+    }
+
+    const newEval = addEvaluation(name, currentGrade, currentSubject, maxScore, weight, date, notes);
+    console.log('[DEBUG] Evaluation created:', newEval);
+    
     document.getElementById('createEvaluationForm').reset();
     hideCreateEvalForm();
     renderEvaluationsList();
@@ -463,7 +472,10 @@ function hideCreateEvalForm() {
     const form = document.getElementById('createEvalForm');
     if (form) {
         form.classList.add('hidden');
-        document.getElementById('createEvaluationForm').reset();
+        const formElement = document.getElementById('createEvaluationForm');
+        if (formElement) {
+            formElement.reset();
+        }
     }
 }
 
