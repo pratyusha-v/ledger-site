@@ -912,19 +912,25 @@ function validateScore(studentId, maxScore) {
     }
     
     if (score < 0 || score > maxScore) {
-        scoreInput.value = '';
-        scoreInput.value = score < 0 ? '' : maxScore;
         errorIcon.style.display = 'inline-block';
         scoreInput.classList.add('score-error');
-        // Flash the error for 2 seconds
-        setTimeout(() => {
-            errorIcon.style.display = 'none';
-            scoreInput.classList.remove('score-error');
-        }, 2000);
     } else {
         errorIcon.style.display = 'none';
         scoreInput.classList.remove('score-error');
     }
+}
+
+function hasInvalidScores(maxScore) {
+    const scoreInputs = document.querySelectorAll('#gradeEntryList input[type="number"]');
+    for (let input of scoreInputs) {
+        const score = parseFloat(input.value);
+        if (input.value !== '' && !isNaN(score)) {
+            if (score < 0 || score > maxScore) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 function updateWeightedMark(studentId, maxScore, weight) {
@@ -953,6 +959,12 @@ function backToEvaluationsList() {
 async function handleSaveGrades() {
     if (!currentEvaluation) {
         alert('No evaluation selected');
+        return;
+    }
+
+    // Check for invalid scores before saving
+    if (hasInvalidScores(currentEvaluation.max_score)) {
+        alert('Please fix invalid scores (must be between 0 and ' + currentEvaluation.max_score + ') before saving.');
         return;
     }
 
