@@ -6,6 +6,7 @@ let currentSubject = '';
 let currentEvaluation = null;
 let editingEvaluationId = null;
 let gradeEntries = {}; // Track score inputs
+let currentStudentForPerformance = null;
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', () => {
@@ -251,6 +252,132 @@ async function renderStudentsList() {
     } catch (error) {
         console.error('[ERROR] Failed to render students:', error);
     }
+}
+
+async function viewStudentPerformance(studentId, studentName) {
+    try {
+        currentStudentForPerformance = studentId;
+        const titleEl = document.getElementById('studentPerformanceTitle');
+        titleEl.textContent = `Performance - ${studentName}`;
+
+        // Fetch all subjects
+        const { data: subjects, error: subjectsError } = await supabase
+            .from('subjects')
+            .select('id, name')
+            .order('name');
+
+        if (subjectsError) throw subjectsError;
+
+        const performanceContainer = document.getElementById('performanceContainer');
+        if (!performanceContainer) return;
+
+        if (!subjects || subjects.length === 0) {
+            performanceContainer.innerHTML = '<p class="empty-state">No subjects available.</p>';
+            showSection('student-performance-section');
+            return;
+        }
+
+        let html = '';
+
+        // For each subject, get evaluations and grades
+        for (const subject of subjects) {
+            const { data: evaluations, error: evalsError } = await supabase
+                .from('evaluations')
+                .select('*')
+                .eq('subject_id', subject.id)
+                .order('date');
+
+            if (evalsError) throw evalsError;
+
+            if (!evaluations || evaluations.length === 0) {
+                continue;
+            }
+
+            // Get grades for this student in this subject
+            const { data: grades, error: gradesError } = await supabase
+                .from('grade_entries')
+                .select('*')
+                .in('evaluation_id', evaluations.map(e => e.id));
+
+            if (gradesError) throw gradesError;
+
+            // Build grades map for this student
+            const gradesMap = {};
+            grades.forEach(g => {
+                if (g.student_id === studentId) {
+                    gradesMap[g.evaluation_id] = g.score;
+                }
+            });
+
+            // Build table for this subject
+            html += `
+                <div class="subject-performance-section\">
+                    <h3>${subject.name}</h3>
+                    <table class="summary-table\">
+                        <thead>
+                            <tr>
+                                <th>Evaluation</th>
+                                ${evaluations.map(e => `<th colspan=\"2\" style=\"text-align: center;\">${e.title}<br><small>(${e.max_score} marks, ${e.weight}% weight)</small></th>`).join('')}
+                                <th colspan=\"2\" style=\"text-align: center;\">Total</th>
+                            </tr>
+                            <tr>
+                                <th></th>
+                                ${evaluations.map(() => `<th>Marks</th><th>Weighted</th>`).join('')}
+                                <th>Marks</th>
+                                <th>Weighted</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>${studentName}</strong></td>
+            `;
+
+            let totalMarks = 0;
+            let totalWeighted = 0;
+            let hasGrades = false;
+
+            evaluations.forEach(evaluation => {
+                const score = gradesMap[evaluation.id];
+                if (score) hasGrades = true;
+                const marks = score || '-';
+                const weightedMarks = score ? ((score / evaluation.max_score) * 100 * evaluation.weight / 100).toFixed(2) : '-';
+                
+                html += `<td>${marks}</td><td>${weightedMarks}</td>`;
+                
+                if (score) {
+                    totalMarks += score;
+                    totalWeighted += parseFloat(weightedMarks);
+                }
+            });
+
+            html += `
+                                <td><strong>${hasGrades ? totalMarks.toFixed(2) : '-'}</strong></td>
+                                <td><strong>${hasGrades ? totalWeighted.toFixed(2) : '-'}</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        if (html === '') {
+            performanceContainer.innerHTML = '<p class="empty-state\">No evaluations found for any subject.</p>';
+        } else {
+            performanceContainer.innerHTML = html;
+        }
+
+        showSection('student-performance-section');
+        console.log('[PERFORMANCE] Showing for student:', studentId);
+    } catch (error) {
+        console.error('[ERROR] Failed to render student performance:', error);
+        alert('Failed to load student performance: ' + error.message);
+    }
+}
+
+function backToStudentsList() {
+    showSection('students-section');
+    renderStudentsList();
+    currentStudentForPerformance = null;
 }
 
 async function handleAddStudent(e) {
@@ -976,6 +1103,8 @@ async function deleteSubject(subjectId) {
 // ===== WINDOW FUNCTIONS (for onclick handlers) =====
 window.editStudent = editStudent;
 window.deleteStudent = deleteStudent;
+window.viewStudentPerformance = viewStudentPerformance;
+window.backToStudentsList = backToStudentsList;
 window.editEvaluation = editEvaluation;
 window.closeEditEvalModal = closeEditEvalModal;
 window.deleteEvaluation = deleteEvaluation;

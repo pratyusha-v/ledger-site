@@ -953,6 +953,29 @@ body.print-mode .content {
     background: #9ca3af;
 }
 
+/* ===== Student Performance ===== */
+.performance-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.performance-header h2 {
+    margin: 0;
+}
+
+.subject-performance-section {
+    margin-bottom: 32px;
+}
+
+.subject-performance-section h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 16px;
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
     .sidebar {
