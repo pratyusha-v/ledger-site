@@ -1,9 +1,7 @@
 // ===== DATA MODEL & STORAGE =====
 
-// Initialize or retrieve data from localStorage
 const STORAGE_KEY = 'gradingPortalData';
 
-// Default subjects (same across all grades)
 const DEFAULT_SUBJECTS = [
     { id: 1, name: 'Math' },
     { id: 2, name: 'Science' },
@@ -12,21 +10,18 @@ const DEFAULT_SUBJECTS = [
     { id: 5, name: 'Physical Education' }
 ];
 
-// Grades in the school
 const GRADES = [6, 7, 8, 9, 10, 11, 12];
 
-// Initialize data structure
 function initializeData() {
     const existingData = localStorage.getItem(STORAGE_KEY);
     if (existingData) {
         return JSON.parse(existingData);
     }
 
-    // Default empty data structure
     const newData = {
         subjects: DEFAULT_SUBJECTS,
         students: [],
-        assignments: [],
+        evaluations: [],
         gradeEntries: []
     };
 
@@ -36,13 +31,11 @@ function initializeData() {
 
 let appData = initializeData();
 
-// Save data to localStorage
 function saveData(data) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     appData = data;
 }
 
-// Get next available ID for a collection
 function getNextId(collection) {
     if (collection.length === 0) return 1;
     return Math.max(...collection.map(item => item.id)) + 1;
@@ -67,7 +60,6 @@ function getStudentsByGrade(grade) {
 
 function deleteStudent(studentId) {
     appData.students = appData.students.filter(s => s.id !== studentId);
-    // Also delete associated grade entries
     appData.gradeEntries = appData.gradeEntries.filter(ge => ge.studentId !== studentId);
     saveData(appData);
 }
@@ -76,11 +68,11 @@ function getStudentById(studentId) {
     return appData.students.find(s => s.id === studentId);
 }
 
-// ===== ASSIGNMENT OPERATIONS =====
+// ===== EVALUATION OPERATIONS =====
 
-function addAssignment(title, grade, subjectId, maxScore, weight, date) {
-    const assignment = {
-        id: getNextId(appData.assignments),
+function addEvaluation(title, grade, subjectId, maxScore, weight, date) {
+    const evaluation = {
+        id: getNextId(appData.evaluations),
         title: title,
         grade: parseInt(grade),
         subjectId: parseInt(subjectId),
@@ -88,33 +80,31 @@ function addAssignment(title, grade, subjectId, maxScore, weight, date) {
         weight: parseInt(weight),
         date: date || new Date().toISOString().split('T')[0]
     };
-    appData.assignments.push(assignment);
+    appData.evaluations.push(evaluation);
     saveData(appData);
-    return assignment;
+    return evaluation;
 }
 
-function getAssignmentsByGradeAndSubject(grade, subjectId) {
-    return appData.assignments
-        .filter(a => a.grade === parseInt(grade) && a.subjectId === parseInt(subjectId))
+function getEvaluationsByGradeAndSubject(grade, subjectId) {
+    return appData.evaluations
+        .filter(e => e.grade === parseInt(grade) && e.subjectId === parseInt(subjectId))
         .sort((a, b) => new Date(b.date) - new Date(a.date));
 }
 
-function deleteAssignment(assignmentId) {
-    appData.assignments = appData.assignments.filter(a => a.id !== assignmentId);
-    // Also delete associated grade entries
-    appData.gradeEntries = appData.gradeEntries.filter(ge => ge.assignmentId !== assignmentId);
+function deleteEvaluation(evaluationId) {
+    appData.evaluations = appData.evaluations.filter(e => e.id !== evaluationId);
+    appData.gradeEntries = appData.gradeEntries.filter(ge => ge.evaluationId !== evaluationId);
     saveData(appData);
 }
 
-function getAssignmentById(assignmentId) {
-    return appData.assignments.find(a => a.id === assignmentId);
+function getEvaluationById(evaluationId) {
+    return appData.evaluations.find(e => e.id === evaluationId);
 }
 
 // ===== GRADE ENTRY OPERATIONS =====
 
-function setGrade(studentId, assignmentId, score) {
-    // Check if entry already exists
-    let entry = appData.gradeEntries.find(ge => ge.studentId === studentId && ge.assignmentId === assignmentId);
+function setGrade(studentId, evaluationId, score) {
+    let entry = appData.gradeEntries.find(ge => ge.studentId === studentId && ge.evaluationId === evaluationId);
     
     if (entry) {
         entry.score = score === '' ? null : parseFloat(score);
@@ -122,7 +112,7 @@ function setGrade(studentId, assignmentId, score) {
         entry = {
             id: getNextId(appData.gradeEntries),
             studentId: studentId,
-            assignmentId: assignmentId,
+            evaluationId: evaluationId,
             score: score === '' ? null : parseFloat(score)
         };
         appData.gradeEntries.push(entry);
@@ -132,32 +122,27 @@ function setGrade(studentId, assignmentId, score) {
     return entry;
 }
 
-function getGrade(studentId, assignmentId) {
-    const entry = appData.gradeEntries.find(ge => ge.studentId === studentId && ge.assignmentId === assignmentId);
+function getGrade(studentId, evaluationId) {
+    const entry = appData.gradeEntries.find(ge => ge.studentId === studentId && ge.evaluationId === evaluationId);
     return entry ? entry.score : null;
-}
-
-function getGradeEntriesByStudent(studentId) {
-    return appData.gradeEntries.filter(ge => ge.studentId === studentId);
 }
 
 // ===== CALCULATION OPERATIONS =====
 
-// Calculate weighted average for a student in a specific subject
 function calculateStudentSubjectAverage(studentId, grade, subjectId) {
-    const assignments = getAssignmentsByGradeAndSubject(grade, subjectId);
+    const evaluations = getEvaluationsByGradeAndSubject(grade, subjectId);
     
-    if (assignments.length === 0) return null;
+    if (evaluations.length === 0) return null;
 
     let totalScore = 0;
     let totalWeight = 0;
 
-    assignments.forEach(assignment => {
-        const score = getGrade(studentId, assignment.id);
+    evaluations.forEach(evaluation => {
+        const score = getGrade(studentId, evaluation.id);
         if (score !== null) {
-            const normalizedScore = (score / assignment.maxScore) * 100;
-            totalScore += normalizedScore * assignment.weight;
-            totalWeight += assignment.weight;
+            const normalizedScore = (score / evaluation.maxScore) * 100;
+            totalScore += normalizedScore * evaluation.weight;
+            totalWeight += evaluation.weight;
         }
     });
 
@@ -165,7 +150,6 @@ function calculateStudentSubjectAverage(studentId, grade, subjectId) {
     return (totalScore / totalWeight).toFixed(2);
 }
 
-// Calculate class average for a subject
 function calculateClassSubjectAverage(grade, subjectId) {
     const students = getStudentsByGrade(grade);
     const averages = students
@@ -176,10 +160,9 @@ function calculateClassSubjectAverage(grade, subjectId) {
     return (averages.reduce((a, b) => a + b, 0) / averages.length).toFixed(2);
 }
 
-// Calculate average for a specific assignment
-function calculateAssignmentAverage(assignmentId) {
-    const entries = appData.gradeEntries.filter(ge => ge.assignmentId === assignmentId);
-    const assignment = getAssignmentById(assignmentId);
+function calculateEvaluationAverage(evaluationId) {
+    const entries = appData.gradeEntries.filter(ge => ge.evaluationId === evaluationId);
+    const evaluation = getEvaluationById(evaluationId);
 
     if (entries.length === 0) return null;
 
@@ -187,44 +170,7 @@ function calculateAssignmentAverage(assignmentId) {
     if (validEntries.length === 0) return null;
 
     const avgScore = validEntries.reduce((sum, e) => sum + e.score, 0) / validEntries.length;
-    return ((avgScore / assignment.maxScore) * 100).toFixed(2);
-}
-
-// Get all subject averages for a student
-function getStudentAllSubjectAverages(studentId) {
-    const student = getStudentById(studentId);
-    if (!student) return {};
-
-    const averages = {};
-    appData.subjects.forEach(subject => {
-        const avg = calculateStudentSubjectAverage(studentId, student.grade, subject.id);
-        if (avg !== null) {
-            averages[subject.id] = { name: subject.name, average: avg };
-        }
-    });
-
-    return averages;
-}
-
-// Get all assignment scores for a student
-function getStudentAssignmentScores(studentId) {
-    const entries = getGradeEntriesByStudent(studentId);
-    const scores = {};
-
-    entries.forEach(entry => {
-        const assignment = getAssignmentById(entry.assignmentId);
-        if (assignment && entry.score !== null) {
-            scores[entry.assignmentId] = {
-                title: assignment.title,
-                score: entry.score,
-                maxScore: assignment.maxScore,
-                subject: getSubjectById(assignment.subjectId).name,
-                date: assignment.date
-            };
-        }
-    });
-
-    return scores;
+    return ((avgScore / evaluation.maxScore) * 100).toFixed(2);
 }
 
 // ===== SUBJECT OPERATIONS =====
@@ -239,143 +185,106 @@ function getAllSubjects() {
 
 // ===== UI UTILITIES =====
 
-// Populate subject selectors
 function populateSubjectSelectors() {
     const subjects = getAllSubjects();
-    const selectors = [
-        'subjectSelect',
-        'assignmentSubjectSelect',
-        'gradeEntrySubjectSelect',
-        'reportSubjectSelect'
-    ];
-
-    selectors.forEach(selectorId => {
-        const select = document.getElementById(selectorId);
-        if (select) {
-            const currentValue = select.value;
-            select.innerHTML = '<option value="">-- Choose a subject --</option>';
-            subjects.forEach(subject => {
-                const option = document.createElement('option');
-                option.value = subject.id;
-                option.textContent = subject.name;
-                select.appendChild(option);
-            });
-            if (currentValue) select.value = currentValue;
-        }
-    });
+    const select = document.getElementById('mainSubjectSelect');
+    if (select) {
+        const currentValue = select.value;
+        select.innerHTML = '<option value="">Choose subject...</option>';
+        subjects.forEach(subject => {
+            const option = document.createElement('option');
+            option.value = subject.id;
+            option.textContent = subject.name;
+            select.appendChild(option);
+        });
+        if (currentValue) select.value = currentValue;
+    }
 }
 
-// Format a date string to readable format
 function formatDate(dateString) {
     if (!dateString) return 'N/A';
     const date = new Date(dateString + 'T00:00:00');
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-// ===== UI INTERACTION HANDLERS =====
+// ===== UI STATE MANAGEMENT =====
 
-// Tab switching
-document.querySelectorAll('.tab-btn').forEach(button => {
-    button.addEventListener('click', () => {
-        const tabName = button.dataset.tab;
+let currentGrade = '';
+let currentSubject = '';
 
-        // Hide all tabs
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        // Remove active class from all buttons
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+function checkSelection() {
+    const grade = document.getElementById('mainGradeSelect').value;
+    const subject = document.getElementById('mainSubjectSelect').value;
 
-        // Show selected tab
-        document.getElementById(tabName).classList.add('active');
-        button.classList.add('active');
-    });
-});
+    currentGrade = grade;
+    currentSubject = subject;
 
-// ===== DASHBOARD TAB =====
+    const actionButtons = document.querySelectorAll('.action-btn');
+    const emptyView = document.getElementById('emptyState');
 
-document.getElementById('gradeSelect').addEventListener('change', renderDashboard);
-document.getElementById('subjectSelect').addEventListener('change', renderDashboard);
-
-function renderDashboard() {
-    const grade = document.getElementById('gradeSelect').value;
-    const subjectId = document.getElementById('subjectSelect').value;
-    const dashboardContent = document.getElementById('dashboardContent');
-
-    if (!grade || !subjectId) {
-        dashboardContent.innerHTML = '<p class="empty-state">Select a grade and subject to view class information.</p>';
-        return;
-    }
-
-    const students = getStudentsByGrade(grade);
-    const assignments = getAssignmentsByGradeAndSubject(grade, subjectId);
-    const subject = getSubjectById(parseInt(subjectId));
-
-    let html = `<h3>${subject.name} - Grade ${grade}</h3>`;
-
-    // Summary cards
-    html += '<div class="summary-row">';
-    html += `<div class="summary-card">
-        <h4>Total Students</h4>
-        <div class="value">${students.length}</div>
-    </div>`;
-    html += `<div class="summary-card">
-        <h4>Total Assignments</h4>
-        <div class="value">${assignments.length}</div>
-    </div>`;
-
-    const classAvg = calculateClassSubjectAverage(parseInt(grade), parseInt(subjectId));
-    html += `<div class="summary-card">
-        <h4>Class Average</h4>
-        <div class="value">${classAvg !== null ? classAvg + '%' : 'N/A'}</div>
-    </div>`;
-    html += '</div>';
-
-    // Assignments table
-    if (assignments.length > 0) {
-        html += '<h4>Assignments</h4><table><thead><tr><th>Title</th><th>Max Score</th><th>Weight</th><th>Date</th><th>Class Avg</th></tr></thead><tbody>';
-        assignments.forEach(assignment => {
-            const avg = calculateAssignmentAverage(assignment.id);
-            html += `<tr>
-                <td>${assignment.title}</td>
-                <td>${assignment.maxScore}</td>
-                <td>${assignment.weight}</td>
-                <td>${formatDate(assignment.date)}</td>
-                <td>${avg !== null ? avg + '%' : 'N/A'}</td>
-            </tr>`;
-        });
-        html += '</tbody></table>';
-    }
-
-    // Student averages
-    if (students.length > 0) {
-        html += '<h4>Student Averages in ' + subject.name + '</h4><table><thead><tr><th>Student Name</th><th>Average</th></tr></thead><tbody>';
-        students.forEach(student => {
-            const avg = calculateStudentSubjectAverage(student.id, parseInt(grade), parseInt(subjectId));
-            const avgText = avg !== null ? avg + '%' : 'No grades';
-            html += `<tr><td>${student.name}</td><td>${avgText}</td></tr>`;
-        });
-        html += '</tbody></table>';
+    if (!grade || !subject) {
+        actionButtons.forEach(btn => btn.disabled = true);
+        emptyView.style.display = 'flex';
+        hideAllSections();
     } else {
-        html += '<p class="empty-state">No students in this grade.</p>';
+        actionButtons.forEach(btn => btn.disabled = false);
+        emptyView.style.display = 'none';
     }
-
-    dashboardContent.innerHTML = html;
 }
 
-// ===== STUDENTS TAB =====
+function hideAllSections() {
+    document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+}
 
-document.getElementById('studentGradeSelect').addEventListener('change', renderStudentsList);
-document.getElementById('addStudentForm').addEventListener('submit', handleAddStudent);
-
-function renderStudentsList() {
-    const grade = document.getElementById('studentGradeSelect').value;
-    const studentsList = document.getElementById('studentsList');
-
-    if (!grade) {
-        studentsList.innerHTML = '<p class="empty-state">Select a grade to see students.</p>';
+function showSection(sectionId) {
+    if (!currentGrade || !currentSubject) {
+        alert('Please select both a grade and subject first.');
         return;
     }
+    hideAllSections();
+    document.getElementById(sectionId).classList.add('active');
+}
 
-    const students = getStudentsByGrade(grade);
+// ===== EVENT LISTENERS SETUP =====
+
+document.addEventListener('DOMContentLoaded', () => {
+    populateSubjectSelectors();
+
+    document.getElementById('mainGradeSelect').addEventListener('change', checkSelection);
+    document.getElementById('mainSubjectSelect').addEventListener('change', checkSelection);
+
+    document.getElementById('manageStudentsBtn').addEventListener('click', () => {
+        showSection('students-section');
+        renderStudentsList();
+    });
+
+    document.getElementById('manageEvaluationsBtn').addEventListener('click', () => {
+        showSection('evaluations-section');
+        renderEvaluationsList();
+    });
+
+    document.getElementById('newEvaluationBtn').addEventListener('click', () => {
+        showSection('new-evaluation-section');
+        renderGradeEntryTable();
+    });
+
+    document.getElementById('summaryBtn').addEventListener('click', () => {
+        showSection('summary-section');
+        renderSummary();
+    });
+
+    document.getElementById('addStudentForm').addEventListener('submit', handleAddStudent);
+    document.getElementById('addEvaluationForm').addEventListener('submit', handleAddEvaluation);
+    document.getElementById('printSummaryBtn').addEventListener('click', () => window.print());
+
+    checkSelection();
+});
+
+// ===== STUDENTS SECTION =====
+
+function renderStudentsList() {
+    const studentsList = document.getElementById('studentsList');
+    const students = getStudentsByGrade(currentGrade);
 
     if (students.length === 0) {
         studentsList.innerHTML = '<p class="empty-state">No students in this grade yet.</p>';
@@ -390,7 +299,7 @@ function renderStudentsList() {
                     <div class="list-item-name">${student.name}</div>
                 </div>
                 <div class="list-item-actions">
-                    <button class="btn-danger btn-small" onclick="handleDeleteStudent(${student.id})">Delete</button>
+                    <button class="btn-danger" onclick="deleteAndRefresh('student', ${student.id})">Delete</button>
                 </div>
             </div>
         `;
@@ -401,140 +310,97 @@ function renderStudentsList() {
 
 function handleAddStudent(e) {
     e.preventDefault();
-    const grade = document.getElementById('studentGradeSelect').value;
-    const name = document.getElementById('studentName').value.trim();
-
-    if (!grade) {
-        alert('Please select a grade first.');
-        return;
-    }
+    const name = document.getElementById('studentNameInput').value.trim();
 
     if (!name) {
         alert('Please enter a student name.');
         return;
     }
 
-    addStudent(name, grade);
-    document.getElementById('studentName').value = '';
+    addStudent(name, currentGrade);
+    document.getElementById('studentNameInput').value = '';
     renderStudentsList();
 }
 
-function handleDeleteStudent(studentId) {
-    if (confirm('Are you sure you want to delete this student? Their grade entries will also be deleted.')) {
-        deleteStudent(studentId);
+function deleteAndRefresh(type, id) {
+    if (!confirm('Are you sure?')) return;
+    
+    if (type === 'student') {
+        deleteStudent(id);
         renderStudentsList();
+    } else if (type === 'evaluation') {
+        deleteEvaluation(id);
+        renderEvaluationsList();
     }
 }
 
-// ===== ASSIGNMENTS TAB =====
+// ===== EVALUATIONS SECTION =====
 
-document.getElementById('assignmentGradeSelect').addEventListener('change', updateAssignmentSubjects);
-document.getElementById('assignmentSubjectSelect').addEventListener('change', renderAssignmentsList);
-document.getElementById('addAssignmentForm').addEventListener('submit', handleAddAssignment);
+function renderEvaluationsList() {
+    const evaluationsList = document.getElementById('evaluationsList');
+    const evaluations = getEvaluationsByGradeAndSubject(currentGrade, currentSubject);
 
-function updateAssignmentSubjects() {
-    renderAssignmentsList();
-}
-
-function renderAssignmentsList() {
-    const grade = document.getElementById('assignmentGradeSelect').value;
-    const subjectId = document.getElementById('assignmentSubjectSelect').value;
-    const assignmentsList = document.getElementById('assignmentsList');
-
-    if (!grade || !subjectId) {
-        assignmentsList.innerHTML = '<p class="empty-state">Select a grade and subject to see assignments.</p>';
-        return;
-    }
-
-    const assignments = getAssignmentsByGradeAndSubject(grade, subjectId);
-
-    if (assignments.length === 0) {
-        assignmentsList.innerHTML = '<p class="empty-state">No assignments yet for this grade and subject.</p>';
+    if (evaluations.length === 0) {
+        evaluationsList.innerHTML = '<p class="empty-state">No evaluations yet for this subject.</p>';
         return;
     }
 
     let html = '';
-    assignments.forEach(assignment => {
+    evaluations.forEach(e => {
         html += `
             <div class="list-item">
                 <div>
-                    <div class="list-item-name">${assignment.title}</div>
-                    <div class="list-item-meta">Max: ${assignment.maxScore} pts | Weight: ${assignment.weight} | Date: ${formatDate(assignment.date)}</div>
+                    <div class="list-item-name">${e.title}</div>
+                    <div class="list-item-meta">Max: ${e.maxScore} pts | Weight: ${e.weight} | Date: ${formatDate(e.date)}</div>
                 </div>
                 <div class="list-item-actions">
-                    <button class="btn-danger btn-small" onclick="handleDeleteAssignment(${assignment.id})">Delete</button>
+                    <button class="btn-danger" onclick="deleteAndRefresh('evaluation', ${e.id})">Delete</button>
                 </div>
             </div>
         `;
     });
 
-    assignmentsList.innerHTML = html;
+    evaluationsList.innerHTML = html;
 }
 
-function handleAddAssignment(e) {
+function handleAddEvaluation(e) {
     e.preventDefault();
-    const grade = document.getElementById('assignmentGradeSelect').value;
-    const subjectId = document.getElementById('assignmentSubjectSelect').value;
-    const title = document.getElementById('assignmentTitle').value.trim();
-    const maxScore = document.getElementById('assignmentMaxScore').value;
-    const weight = document.getElementById('assignmentWeight').value;
-    const date = document.getElementById('assignmentDate').value;
-
-    if (!grade || !subjectId) {
-        alert('Please select a grade and subject first.');
-        return;
-    }
+    const title = document.getElementById('evaluationTitle').value.trim();
+    const maxScore = document.getElementById('evaluationMaxScore').value;
+    const weight = document.getElementById('evaluationWeight').value;
+    const date = document.getElementById('evaluationDate').value;
 
     if (!title || !maxScore || !weight) {
         alert('Please fill in all required fields.');
         return;
     }
 
-    addAssignment(title, grade, subjectId, maxScore, weight, date);
-    document.getElementById('addAssignmentForm').reset();
-    renderAssignmentsList();
+    addEvaluation(title, currentGrade, currentSubject, maxScore, weight, date);
+    document.getElementById('addEvaluationForm').reset();
+    renderEvaluationsList();
 }
 
-function handleDeleteAssignment(assignmentId) {
-    if (confirm('Are you sure you want to delete this assignment? All grades for this assignment will be deleted.')) {
-        deleteAssignment(assignmentId);
-        renderAssignmentsList();
-    }
-}
-
-// ===== GRADES TAB =====
-
-document.getElementById('gradeEntryGradeSelect').addEventListener('change', renderGradeEntryTable);
-document.getElementById('gradeEntrySubjectSelect').addEventListener('change', renderGradeEntryTable);
+// ===== GRADE ENTRY SECTION =====
 
 function renderGradeEntryTable() {
-    const grade = document.getElementById('gradeEntryGradeSelect').value;
-    const subjectId = document.getElementById('gradeEntrySubjectSelect').value;
-    const gradeEntryTable = document.getElementById('gradeEntryTable');
-
-    if (!grade || !subjectId) {
-        gradeEntryTable.innerHTML = '<p class="empty-state">Select a grade and subject to enter grades.</p>';
-        return;
-    }
-
-    const students = getStudentsByGrade(grade);
-    const assignments = getAssignmentsByGradeAndSubject(grade, subjectId);
-    const subject = getSubjectById(parseInt(subjectId));
+    const container = document.getElementById('gradeEntryContainer');
+    const students = getStudentsByGrade(currentGrade);
+    const evaluations = getEvaluationsByGradeAndSubject(currentGrade, currentSubject);
 
     if (students.length === 0) {
-        gradeEntryTable.innerHTML = '<p class="empty-state">No students in this grade.</p>';
+        container.innerHTML = '<p class="empty-state">No students in this grade.</p>';
         return;
     }
 
-    if (assignments.length === 0) {
-        gradeEntryTable.innerHTML = '<p class="empty-state">No assignments yet for this subject. Create an assignment first.</p>';
+    if (evaluations.length === 0) {
+        container.innerHTML = '<p class="empty-state">No evaluations yet. Create one first.</p>';
         return;
     }
 
-    let html = `<h3>Grade Entry - ${subject.name}</h3><table><thead><tr><th>Student</th>`;
+    let html = `<table class="grade-table"><thead><tr><th>Student</th>`;
     
-    assignments.forEach(assignment => {
-        html += `<th>${assignment.title}<br/><small>(${assignment.maxScore} pts)</small></th>`;
+    evaluations.forEach(e => {
+        html += `<th>${e.title}<br/><small>(${e.maxScore} pts)</small></th>`;
     });
     
     html += '<th>Average</th></tr></thead><tbody>';
@@ -542,153 +408,86 @@ function renderGradeEntryTable() {
     students.forEach(student => {
         html += `<tr><td><strong>${student.name}</strong></td>`;
         
-        assignments.forEach(assignment => {
-            const score = getGrade(student.id, assignment.id);
+        evaluations.forEach(e => {
+            const score = getGrade(student.id, e.id);
             const scoreValue = score !== null ? score : '';
-            html += `<td><input type="number" min="0" max="${assignment.maxScore}" value="${scoreValue}" 
-                data-student-id="${student.id}" data-assignment-id="${assignment.id}" 
+            html += `<td><input type="number" min="0" max="${e.maxScore}" value="${scoreValue}" 
+                data-student-id="${student.id}" data-eval-id="${e.id}" 
                 class="grade-input" step="0.5"></td>`;
         });
 
-        const avg = calculateStudentSubjectAverage(student.id, parseInt(grade), parseInt(subjectId));
+        const avg = calculateStudentSubjectAverage(student.id, parseInt(currentGrade), parseInt(currentSubject));
         html += `<td><strong>${avg !== null ? avg + '%' : '-'}</strong></td>`;
         html += '</tr>';
     });
 
     html += '</tbody></table>';
-    gradeEntryTable.innerHTML = html;
+    container.innerHTML = html;
 
-    // Attach event listeners to grade inputs
     document.querySelectorAll('.grade-input').forEach(input => {
         input.addEventListener('change', (e) => {
             const studentId = parseInt(e.target.dataset.studentId);
-            const assignmentId = parseInt(e.target.dataset.assignmentId);
-            setGrade(studentId, assignmentId, e.target.value);
-            renderGradeEntryTable(); // Re-render to update averages
+            const evalId = parseInt(e.target.dataset.evalId);
+            setGrade(studentId, evalId, e.target.value);
+            renderGradeEntryTable();
         });
     });
 }
 
-// ===== REPORTS TAB =====
+// ===== SUMMARY SECTION =====
 
-document.getElementById('reportGradeSelect').addEventListener('change', updateReportStudentSelect);
-document.getElementById('reportSubjectSelect').addEventListener('change', updateReportStudentSelect);
-document.getElementById('generateReportBtn').addEventListener('click', generateReport);
-document.getElementById('printBtn').addEventListener('click', () => window.print());
+function renderSummary() {
+    const container = document.getElementById('summaryContainer');
+    const students = getStudentsByGrade(currentGrade);
+    const evaluations = getEvaluationsByGradeAndSubject(currentGrade, currentSubject);
+    const subject = getSubjectById(parseInt(currentSubject));
 
-function updateReportStudentSelect() {
-    const grade = document.getElementById('reportGradeSelect').value;
-    const studentSelect = document.getElementById('reportStudentSelect');
-
-    if (!grade) {
-        studentSelect.innerHTML = '<option value="">-- All students --</option>';
+    if (evaluations.length === 0) {
+        container.innerHTML = '<p class="empty-state">No evaluations for this subject yet.</p>';
+        document.getElementById('printSummaryBtn').style.display = 'none';
         return;
     }
 
-    const students = getStudentsByGrade(grade);
-    let html = '<option value="">-- All students --</option>';
-    
-    students.forEach(student => {
-        html += `<option value="${student.id}">${student.name}</option>`;
-    });
-
-    studentSelect.innerHTML = html;
-}
-
-function generateReport() {
-    const grade = document.getElementById('reportGradeSelect').value;
-    const subjectId = document.getElementById('reportSubjectSelect').value;
-    const studentId = document.getElementById('reportStudentSelect').value;
-    const reportContent = document.getElementById('reportContent');
-
-    if (!grade || !subjectId) {
-        alert('Please select a grade and subject.');
-        return;
-    }
-
-    const students = getStudentsByGrade(grade);
-    const subject = getSubjectById(parseInt(subjectId));
-    const assignments = getAssignmentsByGradeAndSubject(grade, subjectId);
-
-    if (assignments.length === 0) {
-        reportContent.innerHTML = '<p class="empty-state">No assignments found for this subject and grade.</p>';
-        return;
-    }
-
-    let html = `<h3>${subject.name} Report - Grade ${grade}</h3>`;
-
-    const filteredStudents = studentId ? students.filter(s => s.id === parseInt(studentId)) : students;
-
-    if (filteredStudents.length === 0) {
-        reportContent.innerHTML = '<p class="empty-state">No students found.</p>';
-        return;
-    }
-
-    filteredStudents.forEach(student => {
-        const avg = calculateStudentSubjectAverage(student.id, parseInt(grade), parseInt(subjectId));
-        const subjectAverages = getStudentAllSubjectAverages(student.id);
-
-        html += `<div class="student-report">
-            <h3>${student.name}</h3>
-            <div class="report-grid">
-                <div class="report-item">
-                    <div class="report-item-label">Grade</div>
-                    <div class="report-item-value">${parseInt(grade)}</div>
-                </div>
-                <div class="report-item">
-                    <div class="report-item-label">${subject.name} Average</div>
-                    <div class="report-item-value">${avg !== null ? avg + '%' : 'No grades'}</div>
-                </div>
+    let html = `
+        <div class="summary-grid">
+            <div class="summary-card">
+                <h4>Total Students</h4>
+                <div class="value">${students.length}</div>
             </div>
+            <div class="summary-card">
+                <h4>Total Evaluations</h4>
+                <div class="value">${evaluations.length}</div>
+            </div>
+    `;
 
-            <h4 style="margin-top: 20px;">Assignment Scores</h4>
-            <table style="margin-top: 10px;">
-                <thead>
-                    <tr>
-                        <th>Assignment</th>
-                        <th>Score</th>
-                        <th>Max</th>
-                        <th>%</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
-                <tbody>`;
+    const classAvg = calculateClassSubjectAverage(parseInt(currentGrade), parseInt(currentSubject));
+    html += `
+            <div class="summary-card">
+                <h4>Class Average</h4>
+                <div class="value">${classAvg !== null ? classAvg + '%' : 'N/A'}</div>
+            </div>
+        </div>
+    `;
 
-        assignments.forEach(assignment => {
-            const score = getGrade(student.id, assignment.id);
-            const percent = score !== null ? ((score / assignment.maxScore) * 100).toFixed(1) : '-';
-            const scoreText = score !== null ? score : '-';
-
-            html += `<tr>
-                <td>${assignment.title}</td>
-                <td>${scoreText}</td>
-                <td>${assignment.maxScore}</td>
-                <td>${percent}${percent !== '-' ? '%' : ''}</td>
-                <td>${formatDate(assignment.date)}</td>
-            </tr>`;
-        });
-
-        html += `</tbody>
-            </table>
-
-            <h4 style="margin-top: 20px;">All Subject Averages</h4>
-            <div class="report-grid">`;
-
-        Object.entries(subjectAverages).forEach(([subId, data]) => {
-            html += `<div class="report-item">
-                <div class="report-item-label">${data.name}</div>
-                <div class="report-item-value">${data.average}%</div>
-            </div>`;
-        });
-
-        html += `</div>
-        </div>`;
+    html += '<h3>Evaluation Averages</h3><table class="grade-table"><thead><tr><th>Title</th><th>Date</th><th>Class Avg</th></tr></thead><tbody>';
+    evaluations.forEach(e => {
+        const avg = calculateEvaluationAverage(e.id);
+        html += `<tr><td>${e.title}</td><td>${formatDate(e.date)}</td><td>${avg !== null ? avg + '%' : 'N/A'}</td></tr>`;
     });
+    html += '</tbody></table>';
 
-    reportContent.innerHTML = html;
+    if (students.length > 0) {
+        html += `<h3>Student Averages in ${subject.name}</h3><table class="grade-table"><thead><tr><th>Student</th><th>Average</th></tr></thead><tbody>`;
+        students.forEach(student => {
+            const avg = calculateStudentSubjectAverage(student.id, parseInt(currentGrade), parseInt(currentSubject));
+            const avgText = avg !== null ? avg + '%' : 'No grades';
+            html += `<tr><td>${student.name}</td><td>${avgText}</td></tr>`;
+        });
+        html += '</tbody></table>';
+    }
+
+    container.innerHTML = html;
+    document.getElementById('printSummaryBtn').style.display = 'inline-block';
 }
 
-// ===== INITIALIZATION =====
 populateSubjectSelectors();
-renderDashboard();
-renderStudentsList();
