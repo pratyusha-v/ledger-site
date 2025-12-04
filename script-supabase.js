@@ -102,6 +102,23 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('cancelEditEvalBtn').addEventListener('click', closeEditEvalModal);
     document.getElementById('editEvalForm').addEventListener('submit', handleEditEvalSubmit);
 
+    // Subjects Management listeners
+    document.getElementById('manageSubjectsHeaderBtn').addEventListener('click', (e) => {
+        console.log('[CLICK] Manage Subjects button clicked');
+        e.preventDefault();
+        showSection('subjects-section');
+        renderSubjectsList();
+    });
+
+    const addSubjectForm = document.getElementById('addSubjectForm');
+    if (addSubjectForm) {
+        addSubjectForm.addEventListener('submit', handleAddSubject);
+    }
+
+    document.getElementById('closeEditSubjectBtn').addEventListener('click', closeEditSubjectModal);
+    document.getElementById('cancelEditSubjectBtn').addEventListener('click', closeEditSubjectModal);
+    document.getElementById('editSubjectForm').addEventListener('submit', handleEditSubjectSubmit);
+
     checkSelection();
 });
 
@@ -794,6 +811,162 @@ async function handleSaveGrades() {
     }
 }
 
+// ===== SUBJECTS MANAGEMENT =====
+async function renderSubjectsList() {
+    try {
+        const { data: subjects, error } = await supabase
+            .from('subjects')
+            .select('id, name')
+            .order('name');
+
+        if (error) throw error;
+
+        const subjectsList = document.getElementById('subjectsList');
+        if (!subjectsList) return;
+
+        if (!subjects || subjects.length === 0) {
+            subjectsList.innerHTML = '<p class="empty-state">No subjects added yet.</p>';
+            return;
+        }
+
+        subjectsList.innerHTML = subjects.map(subject => `
+            <div class="subject-item">
+                <div class="subject-info">
+                    <strong>${subject.name}</strong>
+                </div>
+                <div class="subject-actions">
+                    <button class="btn-icon" onclick="editSubject('${subject.id}')" title="Edit">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </button>
+                    <button class="btn-icon" onclick="deleteSubject('${subject.id}')" title="Delete">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+        console.log('[SUBJECTS] Rendered:', subjects.length, 'subjects');
+    } catch (error) {
+        console.error('[ERROR] Failed to render subjects:', error);
+    }
+}
+
+async function handleAddSubject(e) {
+    e.preventDefault();
+    try {
+        const name = document.getElementById('subjectNameInput').value.trim();
+
+        if (!name) {
+            alert('Please enter a subject name.');
+            return;
+        }
+
+        const { error } = await supabase
+            .from('subjects')
+            .insert([{ name }]);
+
+        if (error) throw error;
+
+        console.log('[SUBJECTS] Added:', name);
+        document.getElementById('subjectNameInput').value = '';
+        renderSubjectsList();
+        populateSubjectSelectors();
+    } catch (error) {
+        console.error('[ERROR] Failed to add subject:', error);
+        alert('Failed to add subject: ' + error.message);
+    }
+}
+
+let editingSubjectId = null;
+
+async function editSubject(subjectId) {
+    try {
+        const { data: subject, error } = await supabase
+            .from('subjects')
+            .select('*')
+            .eq('id', subjectId)
+            .single();
+
+        if (error) throw error;
+
+        editingSubjectId = subjectId;
+        document.getElementById('editSubjectName').value = subject.name;
+        document.getElementById('editSubjectModal').classList.remove('hidden');
+        console.log('[SUBJECTS] Opened edit modal for:', subjectId);
+    } catch (error) {
+        console.error('[ERROR] Failed to edit subject:', error);
+        alert('Failed to load subject: ' + error.message);
+    }
+}
+
+function closeEditSubjectModal() {
+    document.getElementById('editSubjectModal').classList.add('hidden');
+    editingSubjectId = null;
+    console.log('[SUBJECTS] Closed edit modal');
+}
+
+async function handleEditSubjectSubmit(e) {
+    e.preventDefault();
+
+    if (!editingSubjectId) {
+        alert('No subject selected');
+        return;
+    }
+
+    try {
+        const name = document.getElementById('editSubjectName').value.trim();
+
+        if (!name) {
+            alert('Please enter a subject name');
+            return;
+        }
+
+        const { error } = await supabase
+            .from('subjects')
+            .update({ name })
+            .eq('id', editingSubjectId);
+
+        if (error) throw error;
+
+        console.log('[SUBJECTS] Updated:', editingSubjectId);
+        closeEditSubjectModal();
+        renderSubjectsList();
+        populateSubjectSelectors();
+        alert('Subject updated successfully!');
+    } catch (error) {
+        console.error('[ERROR] Failed to update subject:', error);
+        alert('Failed to update subject: ' + error.message);
+    }
+}
+
+async function deleteSubject(subjectId) {
+    if (!confirm('Are you sure you want to delete this subject?')) return;
+
+    try {
+        const { error } = await supabase
+            .from('subjects')
+            .delete()
+            .eq('id', subjectId);
+
+        if (error) throw error;
+
+        console.log('[SUBJECTS] Deleted:', subjectId);
+        renderSubjectsList();
+        populateSubjectSelectors();
+    } catch (error) {
+        console.error('[ERROR] Failed to delete subject:', error);
+        alert('Failed to delete subject: ' + error.message);
+    }
+}
+
 // ===== WINDOW FUNCTIONS (for onclick handlers) =====
 window.editStudent = editStudent;
 window.deleteStudent = deleteStudent;
@@ -803,3 +976,6 @@ window.deleteEvaluation = deleteEvaluation;
 window.openGradeEntryView = openGradeEntryView;
 window.updateWeightedMark = updateWeightedMark;
 window.backToEvaluationsList = backToEvaluationsList;
+window.editSubject = editSubject;
+window.deleteSubject = deleteSubject;
+window.closeEditSubjectModal = closeEditSubjectModal;

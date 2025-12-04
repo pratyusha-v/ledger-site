@@ -99,11 +99,45 @@ body {
     margin: 0 auto;
 }
 
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
 .header h1 {
     font-size: 32px;
     font-weight: 700;
-    margin-bottom: 6px;
     letter-spacing: -0.5px;
+}
+
+.header-icon-btn {
+    background-color: rgba(255, 255, 255, 0.15);
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    font-family: inherit;
+}
+
+.header-icon-btn:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.header-icon-btn svg {
+    width: 22px;
+    height: 22px;
+    stroke: currentColor;
 }
 
 .header p {
@@ -452,7 +486,8 @@ textarea {
 
 /* ===== List Items ===== */
 .student-item,
-.evaluation-item {
+.evaluation-item,
+.subject-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -466,24 +501,31 @@ textarea {
 }
 
 .student-item:hover,
-.evaluation-item:hover {
+.evaluation-item:hover,
+.subject-item:hover {
     background-color: #f8f9fc;
     border-color: #6366f1;
     box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
 }
 
 .student-info,
-.evaluation-header {
+.evaluation-header,
+.subject-info {
     flex: 1;
 }
 
 .student-info strong,
-.evaluation-header h4 {
+.evaluation-header h4,
+.subject-info strong {
     font-weight: 700;
     color: #1a1a2e;
     display: block;
     margin-bottom: 5px;
     font-size: 14px;
+}
+
+.subject-info strong {
+    margin-bottom: 0;
 }
 
 .roll-number {

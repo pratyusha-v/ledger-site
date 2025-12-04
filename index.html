@@ -14,7 +14,16 @@
         <!-- Header -->
         <header class="header">
             <div class="header-content">
-                <h1>Ledger</h1>
+                <div class="header-top">
+                    <h1>Ledger</h1>
+                    <button id="manageSubjectsHeaderBtn" class="header-icon-btn" title="Manage Subjects">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H12"></path>
+                            <path d="M4 5h16v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5z"></path>
+                            <circle cx="12" cy="9" r="2"></circle>
+                        </svg>
+                    </button>
+                </div>
                 <p>Manage grades and track student performance</p>
             </div>
         </header>
@@ -138,6 +147,24 @@
                     </div>
                 </section>
 
+                <!-- Subjects Management Section -->
+                <section id="subjects-section" class="section hidden">
+                    <h2>Manage Subjects</h2>
+                    <div class="section-content">
+                        <div class="form-section static-form">
+                            <h3>Add New Subject</h3>
+                            <form id="addSubjectForm" class="subject-form">
+                                <input type="text" id="subjectNameInput" placeholder="Subject name" required>
+                                <button type="submit" class="btn-primary">Add Subject</button>
+                            </form>
+                        </div>
+
+                        <div id="subjectsList" class="items-list scrollable-list">
+                            <p class="empty-state">No subjects yet.</p>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- Summary / Reports Section -->
                 <section id="summary-section" class="section hidden">
                     <h2>Evaluation Summary</h2>
@@ -162,6 +189,26 @@
         <footer class="footer">
             <p>&copy; 2025 Grading Portal</p>
         </footer>
+
+        <!-- Edit Subject Modal -->
+        <div id="editSubjectModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Edit Subject</h3>
+                    <button id="closeEditSubjectBtn" class="modal-close">&times;</button>
+                </div>
+                <form id="editSubjectForm" class="modal-form">
+                    <div class="form-group">
+                        <label for="editSubjectName">Subject Name</label>
+                        <input type="text" id="editSubjectName" required>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn-primary">Save Changes</button>
+                        <button type="button" id="cancelEditSubjectBtn" class="btn-secondary">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
         <!-- Edit Evaluation Modal -->
         <div id="editEvalModal" class="modal-overlay hidden">
