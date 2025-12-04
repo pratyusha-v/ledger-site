@@ -50,10 +50,7 @@
                             Manage Students
                         </button>
                         <button id="manageEvaluationsBtn" class="action-btn" data-action="evaluations">
-                            Manage Evaluations
-                        </button>
-                        <button id="newEvaluationBtn" class="action-btn" data-action="new-evaluation">
-                            New Evaluation
+                            Evaluations
                         </button>
                         <button id="summaryBtn" class="action-btn" data-action="summary">
                             Evaluation Summary
@@ -67,8 +64,8 @@
                 <!-- Manage Students Section -->
                 <section id="students-section" class="section hidden">
                     <h2>Manage Students</h2>
-                    <div class="section-content">
-                        <div class="form-section">
+                    <div class="section-content student-section">
+                        <div class="form-section static-form">
                             <h3>Add New Student</h3>
                             <form id="addStudentForm" class="student-form">
                                 <input type="text" id="studentNameInput" placeholder="Student name" required>
@@ -77,40 +74,34 @@
                             </form>
                         </div>
 
-                        <div id="studentsList" class="items-list">
+                        <div id="studentsList" class="items-list scrollable-list">
                             <p class="empty-state">No students yet.</p>
                         </div>
                     </div>
                 </section>
 
-                <!-- Manage Evaluations Section -->
+                <!-- Evaluations Section (Merged) -->
                 <section id="evaluations-section" class="section hidden">
-                    <h2>Manage Evaluations & Assignments</h2>
-                    <div class="section-content">
-                        <div class="form-section">
-                            <h3>Add New Evaluation</h3>
-                            <form id="addEvaluationForm" class="evaluation-form">
-                                <input type="text" id="evaluationTitle" placeholder="Evaluation title" required>
-                                <input type="number" id="evaluationMaxScore" placeholder="Max score" min="1" value="100" required>
-                                <input type="number" id="evaluationWeight" placeholder="Weight" min="1" value="10" required>
-                                <input type="date" id="evaluationDate">
-                                <button type="submit" class="btn-primary">Add Evaluation</button>
-                            </form>
+                    <h2>Evaluations & Assignments</h2>
+                    <div class="section-content evaluations-section">
+                        <div class="evaluations-list-container">
+                            <div class="list-header">
+                                <h3>All Evaluations</h3>
+                                <button id="addNewEvalBtn" class="btn-add-icon" title="Add new evaluation">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div id="evaluationsList" class="items-list scrollable-list">
+                                <p class="empty-state">No evaluations yet.</p>
+                            </div>
                         </div>
 
-                        <div id="evaluationsList" class="items-list">
-                            <p class="empty-state">No evaluations yet.</p>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- New Evaluation / Enter Grades Section -->
-                <section id="new-evaluation-section" class="section hidden">
-                    <h2>Create New Evaluation</h2>
-                    <div class="section-content">
-                        <div class="form-section">
-                            <h3>Evaluation Details</h3>
-                            <form id="createEvaluationForm" class="student-form">
+                        <div id="createEvalForm" class="form-section create-eval-form hidden">
+                            <h3>Create New Evaluation</h3>
+                            <form id="createEvaluationForm">
                                 <input type="text" id="newEvalNameInput" placeholder="Evaluation name" required>
                                 <div class="form-group">
                                     <label for="newEvalDateInput">Date Conducted:</label>
@@ -119,12 +110,11 @@
                                 <input type="number" id="newEvalMaxScoreInput" placeholder="Total marks" min="1" value="100" required>
                                 <input type="number" id="newEvalWeightInput" placeholder="Weightage towards final grade (%)" min="0" max="100" value="10" required>
                                 <textarea id="newEvalNotesInput" placeholder="Short notes (optional)" rows="3"></textarea>
-                                <button type="submit" class="btn-primary">Create Evaluation</button>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn-primary">Create Evaluation</button>
+                                    <button type="button" id="cancelEvalBtn" class="btn-secondary">Cancel</button>
+                                </div>
                             </form>
-                        </div>
-
-                        <div id="gradeEntryContainer">
-                            <p class="empty-state">Create an evaluation first to enter grades.</p>
                         </div>
                     </div>
                 </section>

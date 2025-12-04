@@ -211,6 +211,13 @@ body {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
+.section-content.student-section,
+.section-content.evaluations-section {
+    display: flex;
+    flex-direction: column;
+    min-height: 500px;
+}
+
 /* ===== Empty View ===== */
 .empty-view {
     display: flex;
@@ -360,6 +367,17 @@ select {
     font-size: 1.1rem;
     transition: all 0.2s ease;
     margin: 0 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+}
+
+.btn-icon svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
 }
 
 .btn-icon:hover {
@@ -421,11 +439,128 @@ select {
     margin-top: 4px;
 }
 
-/* ===== Lists & Tables ===== */
-.list-section,
-.table-section,
-.report-section {
-    margin-top: 25px;
+/* ===== Section Specific Layouts ===== */
+
+.student-section {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: 0;
+}
+
+.student-section .static-form {
+    flex-shrink: 0;
+    margin-bottom: 20px;
+}
+
+.student-section .scrollable-list {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    padding: 0;
+    margin: 0;
+}
+
+.student-section .items-list.scrollable-list .list-item {
+    border-bottom: 1px solid #eee;
+    padding: 12px 16px;
+}
+
+.student-section .items-list.scrollable-list .list-item:last-child {
+    border-bottom: none;
+}
+
+.evaluations-section {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: 0;
+}
+
+.evaluations-list-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+
+.list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #eee;
+    flex-shrink: 0;
+}
+
+.list-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.btn-add-icon {
+    background-color: transparent;
+    border: 2px solid #667eea;
+    color: #667eea;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-add-icon:hover {
+    background-color: #667eea;
+    color: white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.btn-add-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.evaluations-list-container .scrollable-list {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    padding: 0;
+    margin: 0;
+    min-height: 200px;
+}
+
+.evaluations-list-container .items-list.scrollable-list .list-item {
+    border-bottom: 1px solid #eee;
+    padding: 12px 16px;
+}
+
+.evaluations-list-container .items-list.scrollable-list .list-item:last-child {
+    border-bottom: none;
+}
+
+.create-eval-form {
+    flex-shrink: 0;
+    margin-top: 24px;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.form-actions .btn-primary,
+.form-actions .btn-secondary {
+    flex: 1;
 }
 
 .list-item {
