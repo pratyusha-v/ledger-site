@@ -1,0 +1,495 @@
+import { supabase } from './supabase-client.js';
+
+// ===== GLOBAL STATE =====
+let currentGrade = '';
+let currentSubject = '';
+
+// ===== INITIALIZATION =====
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('[INIT] DOM loaded, initializing app with Supabase...');
+    populateSubjectSelectors();
+
+    document.getElementById('mainGradeSelect').addEventListener('change', checkSelection);
+    document.getElementById('mainSubjectSelect').addEventListener('change', checkSelection);
+
+    document.getElementById('manageStudentsBtn').addEventListener('click', (e) => {
+        console.log('[CLICK] Manage Students button clicked');
+        e.preventDefault();
+        showSection('students-section');
+        renderStudentsList();
+    });
+
+    document.getElementById('manageEvaluationsBtn').addEventListener('click', (e) => {
+        console.log('[CLICK] Manage Evaluations button clicked');
+        e.preventDefault();
+        showSection('evaluations-section');
+        renderEvaluationsList();
+        hideCreateEvalForm();
+    });
+
+    document.getElementById('summaryBtn').addEventListener('click', (e) => {
+        console.log('[CLICK] Summary button clicked');
+        e.preventDefault();
+        showSection('summary-section');
+        renderSummary();
+    });
+
+    const addStudentForm = document.getElementById('addStudentForm');
+    if (addStudentForm) {
+        addStudentForm.addEventListener('submit', handleAddStudent);
+    }
+
+    const addNewEvalBtn = document.getElementById('addNewEvalBtn');
+    if (addNewEvalBtn) {
+        addNewEvalBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            showCreateEvalForm();
+        });
+    }
+
+    const cancelEvalBtn = document.getElementById('cancelEvalBtn');
+    if (cancelEvalBtn) {
+        cancelEvalBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            hideCreateEvalForm();
+        });
+    }
+
+    const createEvaluationForm = document.getElementById('createEvaluationForm');
+    if (createEvaluationForm) {
+        createEvaluationForm.addEventListener('submit', handleCreateEvaluation);
+    }
+
+    document.getElementById('printSummaryBtn').addEventListener('click', () => window.print());
+
+    checkSelection();
+});
+
+// ===== SUBJECTS & GRADES =====
+async function populateSubjectSelectors() {
+    try {
+        const { data, error } = await supabase
+            .from('subjects')
+            .select('id, name')
+            .order('name');
+
+        if (error) throw error;
+
+        const select = document.getElementById('mainSubjectSelect');
+        data.forEach(subject => {
+            const option = document.createElement('option');
+            option.value = subject.id;
+            option.textContent = subject.name;
+            select.appendChild(option);
+        });
+
+        console.log('[SUBJECTS] Loaded:', data.length, 'subjects');
+    } catch (error) {
+        console.error('[ERROR] Failed to populate subjects:', error);
+    }
+}
+
+// ===== SELECTION & VISIBILITY =====
+function checkSelection() {
+    const grade = document.getElementById('mainGradeSelect').value;
+    const subject = document.getElementById('mainSubjectSelect').value;
+
+    currentGrade = grade;
+    currentSubject = subject;
+
+    const actionButtons = document.querySelectorAll('.action-btn');
+    const emptyView = document.getElementById('emptyState');
+
+    console.log('[SELECT] Grade:', grade, 'Subject:', subject, 'Buttons found:', actionButtons.length);
+
+    if (!grade || !subject) {
+        actionButtons.forEach(btn => btn.disabled = true);
+        emptyView.style.display = 'flex';
+        hideAllSections();
+        console.log('[SELECT] Buttons disabled - selection incomplete');
+    } else {
+        actionButtons.forEach(btn => btn.disabled = false);
+        emptyView.style.display = 'none';
+        console.log('[SELECT] Buttons enabled - selection complete');
+    }
+}
+
+function hideAllSections() {
+    document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+}
+
+function showSection(sectionId) {
+    if (!currentGrade || !currentSubject) {
+        alert('Please select a grade and subject first.');
+        return;
+    }
+    hideAllSections();
+    const section = document.getElementById(sectionId);
+    if (section) {
+        section.classList.add('active');
+        console.log('[SECTION] Showing:', sectionId);
+    }
+}
+
+// ===== STUDENTS SECTION =====
+async function renderStudentsList() {
+    try {
+        const { data: students, error } = await supabase
+            .from('students')
+            .select('*')
+            .eq('grade', parseInt(currentGrade))
+            .order('name');
+
+        if (error) throw error;
+
+        const studentsList = document.getElementById('studentsList');
+        if (!studentsList) return;
+
+        if (!students || students.length === 0) {
+            studentsList.innerHTML = '<p class="empty-state">No students added yet.</p>';
+            return;
+        }
+
+        studentsList.innerHTML = students.map(student => `
+            <div class="student-item">
+                <div class="student-info">
+                    <strong>${student.name}</strong>
+                    <span class="roll-number">Roll: ${student.roll_number || 'N/A'}</span>
+                </div>
+                <div class="student-actions">
+                    <button class="btn-icon" onclick="editStudent('${student.id}')" title="Edit">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </button>
+                    <button class="btn-icon" onclick="deleteStudent('${student.id}')" title="Delete">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+        console.log('[STUDENTS] Rendered:', students.length, 'students');
+    } catch (error) {
+        console.error('[ERROR] Failed to render students:', error);
+    }
+}
+
+async function handleAddStudent(e) {
+    e.preventDefault();
+    try {
+        const name = document.getElementById('studentNameInput').value.trim();
+        const rollNumber = document.getElementById('studentRollInput').value.trim();
+
+        if (!name || !rollNumber) {
+            alert('Please fill in all fields.');
+            return;
+        }
+
+        const { error } = await supabase
+            .from('students')
+            .insert([{
+                name,
+                roll_number: rollNumber,
+                grade: parseInt(currentGrade)
+            }]);
+
+        if (error) throw error;
+
+        console.log('[STUDENTS] Added:', name);
+        document.getElementById('studentNameInput').value = '';
+        document.getElementById('studentRollInput').value = '';
+        renderStudentsList();
+    } catch (error) {
+        console.error('[ERROR] Failed to add student:', error);
+        alert('Failed to add student: ' + error.message);
+    }
+}
+
+async function editStudent(studentId) {
+    try {
+        const { data: student, error } = await supabase
+            .from('students')
+            .select('*')
+            .eq('id', studentId)
+            .single();
+
+        if (error) throw error;
+
+        const newName = prompt('Enter new student name:', student.name);
+        if (!newName) return;
+
+        const newRoll = prompt('Enter new roll number:', student.roll_number);
+        if (!newRoll) return;
+
+        const { error: updateError } = await supabase
+            .from('students')
+            .update({ name: newName, roll_number: newRoll })
+            .eq('id', studentId);
+
+        if (updateError) throw updateError;
+
+        console.log('[STUDENTS] Updated:', studentId);
+        renderStudentsList();
+    } catch (error) {
+        console.error('[ERROR] Failed to edit student:', error);
+        alert('Failed to edit student: ' + error.message);
+    }
+}
+
+async function deleteStudent(studentId) {
+    if (!confirm('Are you sure you want to delete this student?')) return;
+
+    try {
+        const { error } = await supabase
+            .from('students')
+            .delete()
+            .eq('id', studentId);
+
+        if (error) throw error;
+
+        console.log('[STUDENTS] Deleted:', studentId);
+        renderStudentsList();
+    } catch (error) {
+        console.error('[ERROR] Failed to delete student:', error);
+        alert('Failed to delete student: ' + error.message);
+    }
+}
+
+// ===== EVALUATIONS SECTION =====
+async function renderEvaluationsList() {
+    try {
+        const { data: evaluations, error } = await supabase
+            .from('evaluations')
+            .select('*')
+            .eq('grade', parseInt(currentGrade))
+            .eq('subject_id', currentSubject)
+            .order('date', { ascending: false });
+
+        if (error) throw error;
+
+        const evaluationsList = document.getElementById('evaluationsList');
+        if (!evaluationsList) return;
+
+        if (!evaluations || evaluations.length === 0) {
+            evaluationsList.innerHTML = '<p class="empty-state">No evaluations yet.</p>';
+            return;
+        }
+
+        evaluationsList.innerHTML = evaluations.map(evaluation => `
+            <div class="evaluation-item">
+                <div class="evaluation-header">
+                    <h4>${evaluation.title}</h4>
+                    <button class="btn-icon" onclick="deleteEvaluation('${evaluation.id}')" title="Delete">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="evaluation-details">
+                    <span><strong>Total:</strong> ${evaluation.max_score}</span>
+                    <span><strong>Weight:</strong> ${evaluation.weight}%</span>
+                    <span><strong>Date:</strong> ${evaluation.date}</span>
+                </div>
+                ${evaluation.notes ? `<p class="evaluation-notes">${evaluation.notes}</p>` : ''}
+            </div>
+        `).join('');
+
+        console.log('[EVALUATIONS] Rendered:', evaluations.length, 'evaluations');
+    } catch (error) {
+        console.error('[ERROR] Failed to render evaluations:', error);
+    }
+}
+
+async function handleCreateEvaluation(e) {
+    e.preventDefault();
+    try {
+        const name = document.getElementById('newEvalNameInput').value.trim();
+        const date = document.getElementById('newEvalDateInput').value;
+        const maxScore = document.getElementById('newEvalMaxScoreInput').value;
+        const weight = document.getElementById('newEvalWeightInput').value;
+        const notes = document.getElementById('newEvalNotesInput').value.trim();
+
+        console.log('[DEBUG] Creating evaluation:', { name, date, maxScore, weight, currentGrade, currentSubject });
+
+        if (!name || !date || !maxScore || !weight) {
+            alert('Please fill in all required fields.');
+            return;
+        }
+
+        if (!currentGrade || !currentSubject) {
+            alert('Please select a grade and subject first.');
+            return;
+        }
+
+        const { error } = await supabase
+            .from('evaluations')
+            .insert([{
+                title: name,
+                grade: parseInt(currentGrade),
+                subject_id: currentSubject,
+                max_score: parseFloat(maxScore),
+                weight: parseFloat(weight),
+                date,
+                notes: notes || null
+            }]);
+
+        if (error) throw error;
+
+        console.log('[DEBUG] Evaluation created successfully');
+        document.getElementById('createEvaluationForm').reset();
+        hideCreateEvalForm();
+        renderEvaluationsList();
+    } catch (error) {
+        console.error('[ERROR] Failed to create evaluation:', error);
+        alert('Failed to create evaluation: ' + error.message);
+    }
+}
+
+async function deleteEvaluation(evaluationId) {
+    if (!confirm('Are you sure you want to delete this evaluation?')) return;
+
+    try {
+        const { error } = await supabase
+            .from('evaluations')
+            .delete()
+            .eq('id', evaluationId);
+
+        if (error) throw error;
+
+        console.log('[EVALUATIONS] Deleted:', evaluationId);
+        renderEvaluationsList();
+    } catch (error) {
+        console.error('[ERROR] Failed to delete evaluation:', error);
+        alert('Failed to delete evaluation: ' + error.message);
+    }
+}
+
+function showCreateEvalForm() {
+    const form = document.getElementById('createEvalForm');
+    if (form) {
+        form.classList.remove('hidden');
+        console.log('[FORM] Showing create evaluation form');
+    }
+}
+
+function hideCreateEvalForm() {
+    const form = document.getElementById('createEvalForm');
+    if (form) {
+        form.classList.add('hidden');
+        console.log('[FORM] Hiding create evaluation form');
+    }
+}
+
+// ===== SUMMARY / REPORTS =====
+async function renderSummary() {
+    try {
+        const { data: students, error: studentsError } = await supabase
+            .from('students')
+            .select('id, name')
+            .eq('grade', parseInt(currentGrade));
+
+        if (studentsError) throw studentsError;
+
+        const { data: evaluations, error: evalsError } = await supabase
+            .from('evaluations')
+            .select('*')
+            .eq('grade', parseInt(currentGrade))
+            .eq('subject_id', currentSubject)
+            .order('date');
+
+        if (evalsError) throw evalsError;
+
+        const summaryContainer = document.getElementById('summaryContainer');
+        if (!summaryContainer) return;
+
+        if (!evaluations || evaluations.length === 0) {
+            summaryContainer.innerHTML = '<p class="empty-state">No evaluations to summarize.</p>';
+            return;
+        }
+
+        // Build evaluation score matrix
+        const { data: gradeEntries, error: entriesError } = await supabase
+            .from('grade_entries')
+            .select('*');
+
+        if (entriesError) throw entriesError;
+
+        const gradeMap = {};
+        gradeEntries.forEach(entry => {
+            if (!gradeMap[entry.student_id]) gradeMap[entry.student_id] = {};
+            gradeMap[entry.student_id][entry.evaluation_id] = entry.score;
+        });
+
+        // Build HTML table
+        let html = `
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>Student Name</th>
+                        ${evaluations.map(e => `<th>${e.title}<br><small>(${e.max_score})</small></th>`).join('')}
+                        <th>Weighted Average</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        students.forEach(student => {
+            const scores = evaluations.map(evaluation => {
+                const score = gradeMap[student.id]?.[evaluation.id];
+                return {
+                    score: score || '-',
+                    percent: score ? ((score / evaluation.max_score) * 100).toFixed(1) : '-',
+                    weight: evaluation.weight,
+                    max: evaluation.max_score
+                };
+            });
+
+            const weightedAvg = scores.every(s => s.score === '-')
+                ? '-'
+                : (scores.reduce((sum, s, idx) => {
+                    if (s.score === '-') return sum;
+                    const percent = (s.score / evaluations[idx].max_score) * 100;
+                    return sum + (percent * s.weight);
+                }, 0) / evaluations.reduce((sum, e) => sum + e.weight, 0)).toFixed(1);
+
+            html += `
+                <tr>
+                    <td><strong>${student.name}</strong></td>
+                    ${scores.map(s => `<td>${s.score}${s.score !== '-' ? ` (${s.percent}%)` : ''}</td>`).join('')}
+                    <td><strong>${weightedAvg}%</strong></td>
+                </tr>
+            `;
+        });
+
+        html += `
+                </tbody>
+            </table>
+        `;
+
+        summaryContainer.innerHTML = html;
+        document.getElementById('printSummaryBtn').style.display = 'block';
+
+        console.log('[SUMMARY] Rendered for', students.length, 'students');
+    } catch (error) {
+        console.error('[ERROR] Failed to render summary:', error);
+        const summaryContainer = document.getElementById('summaryContainer');
+        if (summaryContainer) {
+            summaryContainer.innerHTML = '<p class="error">Error loading summary: ' + error.message + '</p>';
+        }
+    }
+}
+
+// ===== WINDOW FUNCTIONS (for onclick handlers) =====
+window.editStudent = editStudent;
+window.deleteStudent = deleteStudent;
+window.deleteEvaluation = deleteEvaluation;
