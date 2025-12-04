@@ -1094,6 +1094,8 @@ table input[type="text"] {
     .tabs,
     .header,
     .footer,
+    .sidebar,
+    .layout,
     button,
     .selector,
     .selectors,
@@ -1105,10 +1107,36 @@ table input[type="text"] {
         background: white;
     }
 
+    .app {
+        display: block;
+    }
+
     .content {
         box-shadow: none;
-        padding: 0;
+        padding: 20px;
         max-width: 100%;
+        margin: 0;
+    }
+
+    .summary-table {
+        width: 100%;
+        font-size: 12px;
+    }
+
+    .summary-table thead {
+        background: white;
+        border: 1px solid #333;
+    }
+
+    .summary-table th {
+        color: #000;
+        border: 1px solid #333;
+        padding: 10px;
+    }
+
+    .summary-table td {
+        border: 1px solid #333;
+        padding: 10px;
     }
 
     table {
