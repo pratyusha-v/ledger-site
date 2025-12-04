@@ -557,7 +557,8 @@ textarea {
 }
 
 .student-actions,
-.evaluation-actions {
+.evaluation-actions,
+.subject-actions {
     display: flex;
     gap: 4px;
     margin-left: 12px;
