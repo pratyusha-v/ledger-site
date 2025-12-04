@@ -162,15 +162,25 @@ function checkSelection() {
 
     const actionButtons = document.querySelectorAll('.action-btn');
     const emptyView = document.getElementById('emptyState');
+    const manageStudentsBtn = document.getElementById('manageStudentsBtn');
 
     console.log('[SELECT] Grade:', grade, 'Subject:', subject, 'Buttons found:', actionButtons.length);
 
-    if (!grade || !subject) {
+    if (!grade) {
+        // No grade selected - disable all buttons
         actionButtons.forEach(btn => btn.disabled = true);
         emptyView.style.display = 'flex';
         hideAllSections();
-        console.log('[SELECT] Buttons disabled - selection incomplete');
+        console.log('[SELECT] Buttons disabled - no grade selected');
+    } else if (!subject) {
+        // Grade selected but no subject - enable only Manage Students
+        actionButtons.forEach(btn => btn.disabled = true);
+        if (manageStudentsBtn) manageStudentsBtn.disabled = false;
+        emptyView.style.display = 'flex';
+        hideAllSections();
+        console.log('[SELECT] Only Manage Students enabled - grade selected but no subject');
     } else {
+        // Both grade and subject selected - enable all buttons
         actionButtons.forEach(btn => btn.disabled = false);
         emptyView.style.display = 'none';
         console.log('[SELECT] Buttons enabled - selection complete');
@@ -188,11 +198,25 @@ function hideAllSections() {
 }
 
 function showSection(sectionId) {
-    // Allow subjects section to show without grade/subject selection
-    if (sectionId !== 'subjects-section' && (!currentGrade || !currentSubject)) {
-        alert('Please select a grade and subject first.');
-        return;
+    // Allow subjects and student sections to show without full selection
+    const noSelectionRequired = ['subjects-section', 'student-performance-section'];
+    
+    if (!noSelectionRequired.includes(sectionId)) {
+        if (sectionId === 'students-section') {
+            // Students section only needs grade
+            if (!currentGrade) {
+                alert('Please select a grade first.');
+                return;
+            }
+        } else {
+            // Other sections need both grade and subject
+            if (!currentGrade || !currentSubject) {
+                alert('Please select a grade and subject first.');
+                return;
+            }
+        }
     }
+    
     hideAllSections();
     const section = document.getElementById(sectionId);
     if (section) {
@@ -225,11 +249,11 @@ async function renderStudentsList() {
 
         studentsList.innerHTML = students.map(student => `
             <div class="student-item">
-                <div class="student-info">
+                <div class="student-info" onclick="viewStudentPerformance('${student.id}', '${student.name}')" style="cursor: pointer;">
                     <strong>${student.name}</strong>
                     <span class="roll-number">Roll: ${student.roll_number || 'N/A'}</span>
                 </div>
-                <div class="student-actions">
+                <div class="student-actions" onclick="event.stopPropagation();">
                     <button class="btn-icon" onclick="editStudent('${student.id}')" title="Edit">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
