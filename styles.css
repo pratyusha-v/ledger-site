@@ -106,6 +106,19 @@ body {
     margin-bottom: 12px;
 }
 
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-icon {
+    width: 32px;
+    height: 32px;
+    stroke: currentColor;
+    flex-shrink: 0;
+}
+
 .header h1 {
     font-size: 32px;
     font-weight: 700;
