@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grading Portal</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>📚 Grading Portal</h1>
+            <p class="subtitle">Simple grade entry & tracking for teachers</p>
+        </header>
+
+        <!-- Navigation tabs -->
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+            <button class="tab-btn" data-tab="students">Students</button>
+            <button class="tab-btn" data-tab="assignments">Assignments</button>
+            <button class="tab-btn" data-tab="grades">Grades</button>
+            <button class="tab-btn" data-tab="reports">Reports</button>
+        </nav>
+
+        <!-- Main content area -->
+        <main class="content">
+            <!-- Dashboard Tab -->
+            <section id="dashboard" class="tab-content active">
+                <h2>Dashboard</h2>
+                <div class="selectors">
+                    <label for="gradeSelect">Select Grade:</label>
+                    <select id="gradeSelect">
+                        <option value="">-- Choose a grade --</option>
+                        <option value="6">Grade 6</option>
+                        <option value="7">Grade 7</option>
+                        <option value="8">Grade 8</option>
+                        <option value="9">Grade 9</option>
+                        <option value="10">Grade 10</option>
+                        <option value="11">Grade 11</option>
+                        <option value="12">Grade 12</option>
+                    </select>
+
+                    <label for="subjectSelect">Select Subject:</label>
+                    <select id="subjectSelect">
+                        <option value="">-- Choose a subject --</option>
+                    </select>
+                </div>
+
+                <div id="dashboardContent" class="dashboard-content">
+                    <p class="empty-state">Select a grade and subject to view class information.</p>
+                </div>
+            </section>
+
+            <!-- Students Tab -->
+            <section id="students" class="tab-content">
+                <h2>Manage Students</h2>
+                <div class="selector">
+                    <label for="studentGradeSelect">Grade:</label>
+                    <select id="studentGradeSelect">
+                        <option value="">-- Choose a grade --</option>
+                        <option value="6">Grade 6</option>
+                        <option value="7">Grade 7</option>
+                        <option value="8">Grade 8</option>
+                        <option value="9">Grade 9</option>
+                        <option value="10">Grade 10</option>
+                        <option value="11">Grade 11</option>
+                        <option value="12">Grade 12</option>
+                    </select>
+                </div>
+
+                <div class="form-section">
+                    <h3>Add New Student</h3>
+                    <form id="addStudentForm">
+                        <input type="text" id="studentName" placeholder="Student name" required>
+                        <button type="submit" class="btn-primary">Add Student</button>
+                    </form>
+                </div>
+
+                <div id="studentsList" class="list-section">
+                    <p class="empty-state">Select a grade to see students.</p>
+                </div>
+            </section>
+
+            <!-- Assignments Tab -->
+            <section id="assignments" class="tab-content">
+                <h2>Manage Assignments</h2>
+                <div class="selector">
+                    <label for="assignmentGradeSelect">Grade:</label>
+                    <select id="assignmentGradeSelect">
+                        <option value="">-- Choose a grade --</option>
+                        <option value="6">Grade 6</option>
+                        <option value="7">Grade 7</option>
+                        <option value="8">Grade 8</option>
+                        <option value="9">Grade 9</option>
+                        <option value="10">Grade 10</option>
+                        <option value="11">Grade 11</option>
+                        <option value="12">Grade 12</option>
+                    </select>
+
+                    <label for="assignmentSubjectSelect">Subject:</label>
+                    <select id="assignmentSubjectSelect">
+                        <option value="">-- Choose a subject --</option>
+                    </select>
+                </div>
+
+                <div class="form-section">
+                    <h3>Add New Assignment</h3>
+                    <form id="addAssignmentForm">
+                        <input type="text" id="assignmentTitle" placeholder="Assignment title" required>
+                        <input type="number" id="assignmentMaxScore" placeholder="Max score" min="1" required>
+                        <input type="number" id="assignmentWeight" placeholder="Weight (e.g., 20)" min="1" required>
+                        <input type="date" id="assignmentDate">
+                        <button type="submit" class="btn-primary">Add Assignment</button>
+                    </form>
+                </div>
+
+                <div id="assignmentsList" class="list-section">
+                    <p class="empty-state">Select a grade and subject to see assignments.</p>
+                </div>
+            </section>
+
+            <!-- Grades Tab -->
+            <section id="grades" class="tab-content">
+                <h2>Enter Grades</h2>
+                <div class="selectors">
+                    <label for="gradeEntryGradeSelect">Grade:</label>
+                    <select id="gradeEntryGradeSelect">
+                        <option value="">-- Choose a grade --</option>
+                        <option value="6">Grade 6</option>
+                        <option value="7">Grade 7</option>
+                        <option value="8">Grade 8</option>
+                        <option value="9">Grade 9</option>
+                        <option value="10">Grade 10</option>
+                        <option value="11">Grade 11</option>
+                        <option value="12">Grade 12</option>
+                    </select>
+
+                    <label for="gradeEntrySubjectSelect">Subject:</label>
+                    <select id="gradeEntrySubjectSelect">
+                        <option value="">-- Choose a subject --</option>
+                    </select>
+                </div>
+
+                <div id="gradeEntryTable" class="table-section">
+                    <p class="empty-state">Select a grade and subject to enter grades.</p>
+                </div>
+            </section>
+
+            <!-- Reports Tab -->
+            <section id="reports" class="tab-content">
+                <h2>Reports & Summaries</h2>
+                <div class="selector">
+                    <label for="reportGradeSelect">Grade:</label>
+                    <select id="reportGradeSelect">
+                        <option value="">-- Choose a grade --</option>
+                        <option value="6">Grade 6</option>
+                        <option value="7">Grade 7</option>
+                        <option value="8">Grade 8</option>
+                        <option value="9">Grade 9</option>
+                        <option value="10">Grade 10</option>
+                        <option value="11">Grade 11</option>
+                        <option value="12">Grade 12</option>
+                    </select>
+
+                    <label for="reportSubjectSelect">Subject:</label>
+                    <select id="reportSubjectSelect">
+                        <option value="">-- Choose a subject --</option>
+                    </select>
+
+                    <label for="reportStudentSelect">Student (optional):</label>
+                    <select id="reportStudentSelect">
+                        <option value="">-- All students --</option>
+                    </select>
+
+                    <button id="generateReportBtn" class="btn-primary">Generate Report</button>
+                    <button id="printBtn" class="btn-secondary">Print</button>
+                </div>
+
+                <div id="reportContent" class="report-section">
+                    <p class="empty-state">Select options and click "Generate Report" to view.</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2025 Grading Portal. Simple. Functional. Helpful.</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
