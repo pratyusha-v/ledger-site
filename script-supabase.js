@@ -3,6 +3,8 @@ import { supabase } from './supabase-client.js';
 // ===== GLOBAL STATE =====
 let currentGrade = '';
 let currentSubject = '';
+let currentEvaluation = null;
+let gradeEntries = {}; // Track score inputs
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', () => {
@@ -61,6 +63,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.getElementById('printSummaryBtn').addEventListener('click', () => window.print());
+
+    // Grade Entry Modal listeners
+    document.getElementById('closeGradeEntryBtn').addEventListener('click', closeGradeEntryModal);
+    document.getElementById('cancelGradesBtn').addEventListener('click', closeGradeEntryModal);
+    document.getElementById('saveGradesBtn').addEventListener('click', handleSaveGrades);
 
     checkSelection();
 });
@@ -283,10 +290,20 @@ async function renderEvaluationsList() {
         }
 
         evaluationsList.innerHTML = evaluations.map(evaluation => `
-            <div class="evaluation-item">
-                <div class="evaluation-header">
-                    <h4>${evaluation.title}</h4>
-                    <button class="btn-icon" onclick="deleteEvaluation('${evaluation.id}')" title="Delete">
+            <div class="evaluation-item" onclick="openGradeEntryModal('${evaluation.id}')">
+                <div>
+                    <div class="evaluation-header">
+                        <h4>${evaluation.title}</h4>
+                    </div>
+                    <div class="evaluation-details">
+                        <span><strong>Total:</strong> ${evaluation.max_score}</span>
+                        <span><strong>Weight:</strong> ${evaluation.weight}%</span>
+                        <span><strong>Date:</strong> ${evaluation.date}</span>
+                    </div>
+                    ${evaluation.notes ? `<p class="evaluation-notes">${evaluation.notes}</p>` : ''}
+                </div>
+                <div class="evaluation-actions">
+                    <button class="btn-icon" onclick="deleteEvaluation(event, '${evaluation.id}')" title="Delete">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="3 6 5 6 21 6"></polyline>
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -295,12 +312,6 @@ async function renderEvaluationsList() {
                         </svg>
                     </button>
                 </div>
-                <div class="evaluation-details">
-                    <span><strong>Total:</strong> ${evaluation.max_score}</span>
-                    <span><strong>Weight:</strong> ${evaluation.weight}%</span>
-                    <span><strong>Date:</strong> ${evaluation.date}</span>
-                </div>
-                ${evaluation.notes ? `<p class="evaluation-notes">${evaluation.notes}</p>` : ''}
             </div>
         `).join('');
 
@@ -355,7 +366,8 @@ async function handleCreateEvaluation(e) {
     }
 }
 
-async function deleteEvaluation(evaluationId) {
+async function deleteEvaluation(event, evaluationId) {
+    event.stopPropagation(); // Prevent opening grade entry modal
     if (!confirm('Are you sure you want to delete this evaluation?')) return;
 
     try {
@@ -489,7 +501,153 @@ async function renderSummary() {
     }
 }
 
+// ===== GRADE ENTRY MODAL =====
+async function openGradeEntryModal(evaluationId) {
+    try {
+        // Fetch evaluation details
+        const { data: evaluation, error: evalError } = await supabase
+            .from('evaluations')
+            .select('*')
+            .eq('id', evaluationId)
+            .single();
+
+        if (evalError) throw evalError;
+
+        currentEvaluation = evaluation;
+        gradeEntries = {};
+
+        // Fetch all students
+        const { data: students, error: studentsError } = await supabase
+            .from('students')
+            .select('*')
+            .eq('grade', parseInt(currentGrade))
+            .order('name');
+
+        if (studentsError) throw studentsError;
+
+        // Fetch existing grades for this evaluation
+        const { data: grades, error: gradesError } = await supabase
+            .from('grade_entries')
+            .select('*')
+            .eq('evaluation_id', evaluationId);
+
+        if (gradesError) throw gradesError;
+
+        // Build grades map
+        const gradesMap = {};
+        grades.forEach(g => {
+            gradesMap[g.student_id] = g.score;
+        });
+
+        // Populate modal
+        const modalTitle = document.getElementById('gradeEntryTitle');
+        modalTitle.textContent = `Enter Grades - ${evaluation.title}`;
+
+        const gradeEntryList = document.getElementById('gradeEntryList');
+        gradeEntryList.innerHTML = students.map(student => {
+            const existingScore = gradesMap[student.id] || '';
+            const percent = existingScore ? ((existingScore / evaluation.max_score) * 100).toFixed(1) : '';
+            return `
+                <div class="grade-entry-row">
+                    <div class="student-name">${student.name}</div>
+                    <input type="number" 
+                           id="score-${student.id}" 
+                           placeholder="Score" 
+                           min="0" 
+                           max="${evaluation.max_score}"
+                           value="${existingScore}"
+                           onchange="updateWeightedPercent('${student.id}', ${evaluation.max_score})">
+                    <div class="weighted-percent ${percent ? '' : 'empty'}" id="percent-${student.id}">
+                        ${percent ? percent + '%' : '-'}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Show modal
+        document.getElementById('gradeEntryModal').classList.add('active');
+        console.log('[MODAL] Opened grade entry for evaluation:', evaluationId);
+    } catch (error) {
+        console.error('[ERROR] Failed to open grade entry modal:', error);
+        alert('Failed to open grades: ' + error.message);
+    }
+}
+
+function updateWeightedPercent(studentId, maxScore) {
+    const scoreInput = document.getElementById(`score-${studentId}`);
+    const percentDisplay = document.getElementById(`percent-${studentId}`);
+    
+    const score = parseFloat(scoreInput.value);
+    if (score && !isNaN(score)) {
+        const percent = ((score / maxScore) * 100).toFixed(1);
+        percentDisplay.textContent = percent + '%';
+        percentDisplay.classList.remove('empty');
+    } else {
+        percentDisplay.textContent = '-';
+        percentDisplay.classList.add('empty');
+    }
+}
+
+function closeGradeEntryModal() {
+    document.getElementById('gradeEntryModal').classList.remove('active');
+    currentEvaluation = null;
+    console.log('[MODAL] Closed grade entry modal');
+}
+
+async function handleSaveGrades() {
+    if (!currentEvaluation) return;
+
+    try {
+        // Get all score inputs
+        const scoreInputs = document.querySelectorAll('input[type="number"]');
+        const updates = [];
+
+        scoreInputs.forEach(input => {
+            const studentId = input.id.replace('score-', '');
+            const score = parseFloat(input.value);
+
+            if (score || score === 0) {
+                updates.push({
+                    student_id: studentId,
+                    evaluation_id: currentEvaluation.id,
+                    score: score
+                });
+            }
+        });
+
+        if (updates.length === 0) {
+            alert('Please enter at least one grade.');
+            return;
+        }
+
+        // Delete existing grades for this evaluation
+        await supabase
+            .from('grade_entries')
+            .delete()
+            .eq('evaluation_id', currentEvaluation.id);
+
+        // Insert new grades
+        const { error } = await supabase
+            .from('grade_entries')
+            .insert(updates);
+
+        if (error) throw error;
+
+        console.log('[GRADES] Saved', updates.length, 'grades');
+        closeGradeEntryModal();
+        renderEvaluationsList();
+        renderSummary();
+        alert('Grades saved successfully!');
+    } catch (error) {
+        console.error('[ERROR] Failed to save grades:', error);
+        alert('Failed to save grades: ' + error.message);
+    }
+}
+
 // ===== WINDOW FUNCTIONS (for onclick handlers) =====
 window.editStudent = editStudent;
 window.deleteStudent = deleteStudent;
 window.deleteEvaluation = deleteEvaluation;
+window.openGradeEntryModal = openGradeEntryModal;
+window.updateWeightedPercent = updateWeightedPercent;
+window.closeGradeEntryModal = closeGradeEntryModal;
