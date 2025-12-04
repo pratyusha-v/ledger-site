@@ -614,7 +614,7 @@ textarea {
 
 .grade-entry-row {
     display: grid;
-    grid-template-columns: 1fr 110px 130px;
+    grid-template-columns: 1fr 130px 130px;
     gap: 12px;
     align-items: center;
     padding: 14px;
@@ -629,17 +629,49 @@ textarea {
     font-size: 13px;
 }
 
+.score-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .grade-entry-row input[type="number"] {
     padding: 9px 11px;
     border: 1.5px solid #e0e3eb;
     border-radius: 6px;
     font-size: 13px;
+    flex: 1;
 }
 
 .grade-entry-row input[type="number"]:focus {
     outline: none;
     border-color: #6366f1;
     box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+.grade-entry-row input[type="number"].score-error {
+    border-color: #ef4444;
+}
+
+.error-icon {
+    color: #ef4444;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 .weighted-mark {

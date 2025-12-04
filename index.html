@@ -137,14 +137,14 @@
                         <div id="createEvalForm" class="form-section create-eval-form hidden">
                             <h3>Create New Evaluation</h3>
                             <form id="createEvaluationForm">
-                                <input type="text" id="newEvalNameInput" placeholder="Evaluation name" required>
+                                <input type="text" id="newEvalNameInput" placeholder="e.g. Midterm Exam, Unit Test 1" required>
                                 <div class="form-group">
                                     <label for="newEvalDateInput">Date Conducted:</label>
                                     <input type="date" id="newEvalDateInput" required>
                                 </div>
-                                <input type="number" id="newEvalMaxScoreInput" placeholder="Total marks" min="1" value="100" required>
-                                <input type="number" id="newEvalWeightInput" placeholder="Weightage towards final grade (%)" min="0" max="100" value="10" required>
-                                <textarea id="newEvalNotesInput" placeholder="Short notes (optional)" rows="3"></textarea>
+                                <input type="number" id="newEvalMaxScoreInput" placeholder="e.g. 100" min="1" required>
+                                <input type="number" id="newEvalWeightInput" placeholder="e.g. 10" min="0" max="100" required>
+                                <textarea id="newEvalNotesInput" placeholder="e.g. Chapter 3-5, includes MCQs and short answers" rows="3"></textarea>
                                 <div class="form-actions">
                                     <button type="submit" class="btn-primary">Create Evaluation</button>
                                     <button type="button" id="cancelEvalBtn" class="btn-secondary">Cancel</button>

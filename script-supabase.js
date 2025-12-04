@@ -864,13 +864,23 @@ async function openGradeEntryView(evaluationId) {
             return `
                 <div class="grade-entry-row">
                     <div class="student-name">${student.name}</div>
-                    <input type="number" 
-                           id="score-${student.id}" 
-                           placeholder="Score" 
-                           min="0" 
-                           max="${evaluation.max_score}"
-                           value="${existingScore}"
-                           onchange="updateWeightedMark('${student.id}', ${evaluation.max_score}, ${evaluation.weight})">
+                    <div class="score-input-wrapper">
+                        <input type="number" 
+                               id="score-${student.id}" 
+                               placeholder="Score" 
+                               min="0" 
+                               max="${evaluation.max_score}"
+                               value="${existingScore}"
+                               oninput="validateScore('${student.id}', ${evaluation.max_score})"
+                               onchange="updateWeightedMark('${student.id}', ${evaluation.max_score}, ${evaluation.weight})">
+                        <span class="error-icon" id="error-${student.id}" title="Score must be between 0 and ${evaluation.max_score}" style="display: none;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                        </span>
+                    </div>
                     <div class="weighted-mark ${weightedMark ? '' : 'empty'}" id="mark-${student.id}">
                         ${weightedMark ? weightedMark : '-'}
                     </div>
@@ -887,6 +897,26 @@ async function openGradeEntryView(evaluationId) {
     } catch (error) {
         console.error('[ERROR] Failed to open grade entry view:', error);
         alert('Failed to open grades: ' + error.message);
+    }
+}
+
+function validateScore(studentId, maxScore) {
+    const scoreInput = document.getElementById(`score-${studentId}`);
+    const errorIcon = document.getElementById(`error-${studentId}`);
+    const score = parseFloat(scoreInput.value);
+    
+    if (scoreInput.value === '' || isNaN(score)) {
+        errorIcon.style.display = 'none';
+        scoreInput.classList.remove('score-error');
+        return;
+    }
+    
+    if (score < 0 || score > maxScore) {
+        errorIcon.style.display = 'inline-block';
+        scoreInput.classList.add('score-error');
+    } else {
+        errorIcon.style.display = 'none';
+        scoreInput.classList.remove('score-error');
     }
 }
 
